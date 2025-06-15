@@ -38,7 +38,7 @@ exports.signup = async (req, res) =>{
       email: req.body.email.toLowerCase().trim(),
       phone: req.body.phone.trim(),
       password: req.body.password,
-      role: req.body.role || 'auxiliar'
+      role: req.body.role || 'participante'
     });
         // Guardar usuario en la base de datos
     const savedUser = await user.save();
@@ -171,11 +171,26 @@ exports.updateUser = async (req, res) => {
       });
     }
 
-    // Verificar permisos
-    if (currentUserRole !== ROLES.ADMIN && userToUpdate._id.toString() !== currentUserId) {
+    // Solo el admin puede modificar cualquier usuario
+    // Los demás roles solo pueden modificar su propio perfil
+    const allowedSelfRoles = [
+      ROLES.TESORERO,
+      ROLES.PARTICIPANTE,
+      ROLES.SEMINARISTA,
+      ROLES.LOGISTICO,
+      ROLES.EXTERNO
+    ];
+
+    if (
+      currentUserRole !== ROLES.ADMIN &&
+      (
+        !allowedSelfRoles.includes(currentUserRole) ||
+        userToUpdate._id.toString() !== currentUserId
+      )
+    ) {
       return res.status(403).json({
         success: false,
-        message: 'No tienes permisos para modificar otros usuarios'
+        message: 'No tienes permisos para modificar este usuario'
       });
     }
 

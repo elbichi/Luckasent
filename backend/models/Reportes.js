@@ -31,4 +31,4 @@ reportsSchema.post('save', function(error,doc,next)
         next(error);
     }
 });
-module.exports = mongoose.model('Reports', reportsSchema);
+module.exports = mongoose.model('Repotes', reportsSchema);

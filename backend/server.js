@@ -8,7 +8,7 @@ const{MongoClient, ObjectId} = require('mongodb');
 //importar Rutas
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
-//const categoryRoutes = require('./routes/categoryRoutes');
+const categoryRoutes = require('./routes/categotyRoutes');
 //const subcategoryRoutes = require('./routes/subcategoryRoutes');
 //const productRoutes = require('./routes/productRoutes');
 
@@ -36,6 +36,7 @@ mongoose.connect(process.env.MONGODB_URI).then(()=> console.log('Ok MonfoDB cone
 //Rutas
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/categorizacion',categoryRoutes);
 
 
 //Inicio del servidor
