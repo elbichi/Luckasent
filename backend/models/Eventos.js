@@ -2,58 +2,82 @@ const mongoose = require('mongoose');
 
 
 const eventsSchema = new mongoose.Schema({
-    name :{
+    name: {
         type: String,
         required: [true, 'El nombre es obligatorio'],
         trim: true,
         unique: true
     },
-
-    description :{
+    description: {
         type: String,
-        required: [true, 'la descripcion es oblicatoria'],
+        required: [true, 'La descripción es obligatoria'],
         trim: true
-
     },
-    price :{
+    price: {
         type: Number,
-        required: [true, 'la precio es oblicatoria'],
-        min: [0, 'El precio no puede ser negativo ']  
+        required: [true, 'El precio es obligatorio'],
+        min: [0, 'El precio no puede ser negativo']
     },
-    stock :{
-        type: Number,
-        required: [true, 'la stock es requerido'],
-        min: [0, 'El stock no puede ser negativo ']  
-    },
-    category :{
+    category: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Category',
-        required: [true, 'la Categoria es requerida ']
+        required: [true, 'La categoría es requerida']
     },
-    subcategory :{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Subcategory',
-        required: [true, 'la Subcategoria  es requerida ']
-    },
-    images :{
+    images: {
         type: String
-
     },
-
-
-},{
+    prioridad: {
+        type: String,
+        default: 'Normal'
+    },
+    observaciones: {
+        type: String
+    },
+    categorizadoPor: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    },
+    fechaCategorizacion: {
+        type: Date
+    }
+}, {
     timestamps: true,
     versionKey: false
 });
 
-// Manejo de errores de duplicados 
-eventsSchema.post('save', function(error,doc,next){
-    if (error.name === 'MongoServerError' && error.code === 11000){
-        next(new Error ('Ya existe el producto con ese nombre'));
+// Método para categorizar un evento
+eventsSchema.methods.categorizar = function(categoriaId, prioridad, observaciones, usuarioId) {
+    this.category = categoriaId;
+    this.prioridad = prioridad;
+    this.observaciones = observaciones;
+    this.categorizadoPor = usuarioId;
+    this.fechaCategorizacion = new Date();
+    return this.save();
+};
 
-    }else{
-        next(error)
-    }
-});
+// Obtener estadísticas de eventos por categoría y prioridad
+eventsSchema.statics.obtenerEstadisticas = function() {
+    return this.aggregate([
+        {
+            $group: {
+                _id: {
+                    categoria: '$category',
+                    prioridad: '$prioridad'
+                },
+                total: { $sum: 1 }
+            }
+        }
+    ]);
+};
 
-module.exports= mongoose.model('Events', eventsSchema);
+// Buscar eventos por categoría
+eventsSchema.statics.buscarPorCategoria = function(categoriaId) {
+    return this.find({ category: categoriaId });
+};
+
+// Buscar eventos por prioridad
+eventsSchema.statics.buscarPorPrioridad = function(prioridad) {
+    return this.find({ prioridad });
+};
+
+module.exports = mongoose.model('eventos', eventsSchema);

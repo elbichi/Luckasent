@@ -10,7 +10,7 @@ const {
   categorizarLote,
   eliminarCategorizacion,
   obtenerHistorialCategorizacion
-} = require('../controllers/categoryController');
+} = require('../controllers/csolicitudController');
 
 // Importar middlewares
 const { verifyToken } = require('../middlewares/authJwt');
