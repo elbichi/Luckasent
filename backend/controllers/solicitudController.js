@@ -1,4 +1,4 @@
-const Solicitud = require('../models/Solicitudes');
+const Solicitud = require('../models/Solicitud');
 
 
 // CU03 - CATEGORIZAR SOLICITUDES
