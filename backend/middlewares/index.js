@@ -5,5 +5,6 @@ const role = require('./role');
 module.exports={
     authJwt: require('./authJwt'),
     verifySignup: require('./verifySignUp'),
-    role: require('./role')
+    role: require('./role'),
+    validateEvents: require('./validateEvents')
 };

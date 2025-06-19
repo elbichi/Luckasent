@@ -10,9 +10,9 @@ const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const solicitudRoutes = require('./routes/solicitudRoutes');
 const eventosRoutes = require('./routes/eventosRoutes');
-const cabanasRoutes = require('./routes/cabanasRoutes');
+//const cabanasRoutes = require('./routes/cabanasRoutes');
 const tareaRoutes = require('./routes/tareaRoutes');
-//const categoriasolicitudRoutes = require('./routes/categoriaSolicitudRoutes');
+const categotizacionRoutes = require('./routes/categorizacionRoutes');
 
 // Primero declaramos app
 const app = express();
@@ -40,9 +40,9 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/solicitudes',solicitudRoutes);
 app.use('/api/eventos', eventosRoutes);
-app.use('/api/cabanas', cabanasRoutes);
+//app.use('/api/cabanas', cabanasRoutes);
 app.use('/api/tareas', tareaRoutes);
-//app.use('/api/categoriasolicitud', categoriasolicitudRoutes);
+app.use('/api/categorizacion', categotizacionRoutes);
 
 
 

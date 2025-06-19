@@ -15,4 +15,13 @@ router.put('/:id', [authJwt.verifyToken, role.checkRole('admin', 'logistico')], 
 router.delete('/:id', [authJwt.verifyToken, role.checkRole('admin')], eventosController.deleteEvent);
 // Deshabilitar evento (solo admin)
 router.patch('/:id/disable', [authJwt.verifyToken, role.checkRole('admin','logistico','tesorero')], eventosController.disableEvent);
+// Ruta para categorizar evento
+router.patch('/:id/categorizar', 
+  [authJwt.verifyToken, role.checkRole('admin', 'logistico')], 
+  eventosController.categorizarEvento
+);
+// Ruta para obtener eventos por categoría
+router.get('/categoria', 
+  eventosController.getEventosPorCategoria
+);
 module.exports = router;

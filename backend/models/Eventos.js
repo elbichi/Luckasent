@@ -18,11 +18,20 @@ const eventsSchema = new mongoose.Schema({
         required: [true, 'El precio es obligatorio'],
         min: [0, 'El precio no puede ser negativo']
     },
-    category: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Category',
-        required: [true, 'La categoría es requerida']
+    categoria: {
+        type: String,
+        required: [true, 'La categoría es obligatoria'],
+        enum: ['Conferencia', 'Taller', 'Seminario', 'Retiro', 'Ministerial', 'Social', 'Otro'],
+        default: 'Otro'
     },
+    subCategoria: {
+        type: String,
+        trim: true
+    },
+    etiquetas: [{
+        type: String,
+        trim: true
+    }],
     images: {
         type: String
     },

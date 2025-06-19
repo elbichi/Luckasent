@@ -1,11 +1,11 @@
 // controllers/categoriaSolicitudController.js
-const CategoriaSolicitud = require('../models/categorizacion ');
+const CategoriaSolicitud = require('../models/categorizacion');
 const Solicitud = require('../models/Solicitud');
 
 // CREAR nueva categoría
 const crearCategoria = async (req, res) => {
   try {
-    const { nombre, descripcion, codigo, color, prioridad } = req.body;
+    const { nombre, descripcion, codigo, precio, lugar } = req.body; // Añadir precio aquí
     
     // Verificar si el código ya existe
     const categoriaExistente = await CategoriaSolicitud.findOne({ codigo });
@@ -20,9 +20,9 @@ const crearCategoria = async (req, res) => {
       nombre,
       descripcion,
       codigo,
-      color,
-      prioridad,
-      creadoPor: req.usuario.id // Viene del middleware de autenticación
+      precio,  // Añadir precio aquí
+      lugar,
+      creadoPor: req.userId
     });
 
     await nuevaCategoria.save();
@@ -34,6 +34,7 @@ const crearCategoria = async (req, res) => {
     });
 
   } catch (error) {
+    console.error('Error al crear categoría:', error);
     res.status(500).json({
       success: false,
       message: 'Error al crear la categoría',

@@ -2,12 +2,36 @@ const Tarea = require('../models/Tarea');
 
 // Crear tarea
 exports.crearTarea = async (req, res) => {
-    try {
-        const tarea = new Tarea(req.body);
-        await tarea.save();
-        res.status(201).json(tarea);
+   try {
+        const nuevaTarea = new Tarea({
+            titulo: req.body.titulo,
+            descripcion: req.body.descripcion,
+            estado: req.body.estado,
+            prioridad: req.body.prioridad,
+            asignadoA: req.body.asignadoA,
+            asignadoPor: req.userId, // Se obtiene del token JWT
+            fechaLimite: req.body.fechaLimite,
+            comentarios: req.body.comentarios
+        });
+        
+        await nuevaTarea.save();
+        
+        // Populamos los campos de usuario para la respuesta
+        const tareaPoblada = await Tarea.findById(nuevaTarea._id)
+            .populate('asignadoA', 'username email')
+            .populate('asignadoPor', 'username email');
+
+        res.status(201).json({
+            success: true,
+            message: 'Tarea creada exitosamente',
+            data: tareaPoblada
+        });
     } catch (error) {
-        res.status(400).json({ message: error.message });
+        console.error('Error al crear tarea:', error);
+        res.status(400).json({ 
+            success: false,
+            message: error.message 
+        });
     }
 };
 

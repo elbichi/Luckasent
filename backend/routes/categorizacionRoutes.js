@@ -1,48 +1,25 @@
 const express = require('express');
 const router = express.Router();
-const {
-  crearCategoria,
+const { 
+  crearCategoria, 
   obtenerCategorias,
   obtenerCategoriaPorId,
   actualizarCategoria,
   eliminarCategoria,
-  categorizarSolicitud
-} = require('../controllers/categoriaSolicitudController');
+  categorizarSolicitud 
+} = require('../controllers/categorizacionController');
+const { authJwt } = require('../middlewares');
 
-// Importar correctamente los middlewares
-const { authJwt, role } = require('../middlewares');
+// Middleware de autenticación
+router.use(authJwt.verifyToken);
 
-// CRUD de Categorías (solo para administradores)
-router.post('/', 
-  [authJwt.verifyToken, role.checkRole('admin')], 
-  crearCategoria
-);
-
-router.get('/', 
-  [authJwt.verifyToken], 
-  obtenerCategorias
-);
-
-router.get('/:id', 
-  [authJwt.verifyToken, role.checkRole('admin')], 
-  obtenerCategoriaPorId
-);
-
-router.put('/:id', 
-  [authJwt.verifyToken, role.checkRole('admin')], 
-  actualizarCategoria
-);
-
-router.delete('/:id', 
-  [authJwt.verifyToken, role.checkRole('admin')], 
-  eliminarCategoria
-);
-
-// Categorizar una solicitud específica
-router.put('/solicitud/:id/categorizar', 
-  [authJwt.verifyToken, role.checkRole('admin')], 
-  categorizarSolicitud
-);
+// Rutas
+router.post('/', crearCategoria);
+router.get('/', obtenerCategorias);
+router.get('/:id', obtenerCategoriaPorId);
+router.put('/:id', actualizarCategoria);
+router.delete('/:id', eliminarCategoria);
+router.put('/solicitud/:id/categorizar', categorizarSolicitud);
 
 module.exports = router;
 

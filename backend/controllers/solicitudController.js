@@ -1,4 +1,5 @@
 const Solicitud = require('../models/Solicitud');
+const { validationResult } = require('express-validator'); // Añadir esta línea
 
 
   // Obtener todas las solicitudes con filtros
@@ -116,7 +117,7 @@ const Solicitud = require('../models/Solicitud');
   };
 
   // Crear nueva solicitud
-  crearSolicitud = async (req, res) => {
+  exports.crearSolicitud = async (req, res) => {
     try {
       // Validar errores de entrada
       const errors = validationResult(req);
@@ -128,44 +129,17 @@ const Solicitud = require('../models/Solicitud');
         });
       }
 
-      const {
-        solicitante,
-        email,
-        telefono,
-        tipoSolicitud,
-        categoria,
-        descripcion,
-        prioridad,
-        observaciones,
-        responsableAsignado
-      } = req.body;
-
-      // Verificar si ya existe una solicitud similar reciente
-      const solicitudExistente = await Solicitud.findOne({
-        email,
-        tipoSolicitud,
-        estado: { $in: ['Nueva', 'En Revisión'] },
-        fechaSolicitud: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } // Últimas 24 horas
-      });
-
-      if (solicitudExistente) {
-        return res.status(409).json({
-          success: false,
-          message: 'Ya existe una solicitud similar pendiente para este usuario'
-        });
-      }
-
       const nuevaSolicitud = new Solicitud({
-        solicitante,
-        email,
-        telefono,
-        tipoSolicitud,
-        categoria: categoria || tipoSolicitud, // Si no se especifica categoría, usar el tipo
-        descripcion,
-        prioridad: prioridad || 'Media',
-        observaciones,
-        responsableAsignado,
-        creadoPor: req.user?.id // Si tienes autenticación
+        solicitante: req.body.solicitante,
+        email: req.body.email,
+        telefono: req.body.telefono,
+        tipoSolicitud: req.body.tipoSolicitud,
+        categoria: req.body.categoria,
+        descripcion: req.body.descripcion,
+        estado: req.body.estado || 'Nueva',
+        prioridad: req.body.prioridad,
+        observaciones: req.body.observaciones,
+        responsable: req.body.responsable
       });
 
       const solicitudGuardada = await nuevaSolicitud.save();
@@ -178,21 +152,9 @@ const Solicitud = require('../models/Solicitud');
 
     } catch (error) {
       console.error('Error al crear solicitud:', error);
-      
-      if (error.name === 'ValidationError') {
-        return res.status(400).json({
-          success: false,
-          message: 'Error de validación',
-          errors: Object.values(error.errors).map(err => ({
-            field: err.path,
-            message: err.message
-          }))
-        });
-      }
-
       res.status(500).json({
         success: false,
-        message: 'Error interno del servidor',
+        message: 'Error al crear la solicitud',
         error: error.message
       });
     }
