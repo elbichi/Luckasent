@@ -1,404 +1,412 @@
 const Solicitud = require('../models/Solicitud');
 
 
-// CU03 - CATEGORIZAR SOLICITUDES
+  // Obtener todas las solicitudes con filtros
+  obtenerSolicitudes = async (req, res) => {
+    try {
+      const { 
+        categoria, 
+        estado, 
+        prioridad, 
+        responsable,
+        fechaDesde,
+        fechaHasta,
+        page = 1, 
+        limit = 10,
+        sortBy = 'fechaSolicitud',
+        sortOrder = 'desc'
+      } = req.query;
 
-/**
- * Obtener todas las solicitudes para categorizar
- * GET /api/categorizacion/solicitudes
- */
-const obtenerSolicitudesParaCategorizar = async (req, res) => {
-  try {
-    const {
-      page = 1,
-      limit = 10,
-      estado,
-      categoria,
-      prioridad,
-      tipoParticipante,
-      busqueda
-    } = req.query;
+      // Construir filtros
+      const filtros = {};
+      
+      if (categoria && categoria !== 'todas') filtros.categoria = categoria;
+      if (estado && estado !== 'todos') filtros.estado = estado;
+      if (prioridad && prioridad !== 'todas') filtros.prioridad = prioridad;
+      if (responsable) filtros.responsableAsignado = responsable;
+      
+      // Filtro por fechas
+      if (fechaDesde || fechaHasta) {
+        filtros.fechaSolicitud = {};
+        if (fechaDesde) filtros.fechaSolicitud.$gte = new Date(fechaDesde);
+        if (fechaHasta) filtros.fechaSolicitud.$lte = new Date(fechaHasta);
+      }
 
-    // Construir filtros
-    let filtros = { activo: true };
+      // Configurar paginación
+      const skip = (parseInt(page) - 1) * parseInt(limit);
+      const sortOptions = {};
+      sortOptions[sortBy] = sortOrder === 'desc' ? -1 : 1;
 
-    if (estado && estado !== 'Todos') {
-      filtros.estado = estado;
-    }
+      // Ejecutar consulta
+      const solicitudes = await Solicitud.find(filtros)
+        .sort(sortOptions)
+        .skip(skip)
+        .limit(parseInt(limit))
+        .lean();
 
-    if (categoria && categoria !== 'Todos') {
-      filtros.categoria = categoria;
-    }
+      // Contar total para paginación
+      const total = await Solicitud.countDocuments(filtros);
 
-    if (prioridad && prioridad !== 'Todos') {
-      filtros.prioridad = prioridad;
-    }
+      // Estadísticas
+      const estadisticas = await Solicitud.aggregate([
+        { $match: filtros },
+        {
+          $group: {
+            _id: null,
+            total: { $sum: 1 },
+            nuevas: { $sum: { $cond: [{ $eq: ['$estado', 'Nueva'] }, 1, 0] } },
+            enRevision: { $sum: { $cond: [{ $eq: ['$estado', 'En Revisión'] }, 1, 0] } },
+            urgentes: { $sum: { $cond: [{ $eq: ['$prioridad', 'Urgente'] }, 1, 0] } },
+            completadas: { $sum: { $cond: [{ $eq: ['$estado', 'Completada'] }, 1, 0] } }
+          }
+        }
+      ]);
 
-    if (tipoParticipante && tipoParticipante !== 'Todos') {
-      filtros.tipoParticipante = tipoParticipante;
-    }
-
-    // Búsqueda por texto
-    if (busqueda) {
-      filtros.$or = [
-        { nombre: { $regex: busqueda, $options: 'i' } },
-        { email: { $regex: busqueda, $options: 'i' } },
-        { iglesia: { $regex: busqueda, $options: 'i' } }
-      ];
-    }
-
-    // Paginación
-    const skip = (page - 1) * limit;
-
-    const solicitudes = await Solicitud.find(filtros)
-      .populate('categorizadoPor', 'nombre email')
-      .populate('respondidoPor', 'nombre email')
-      .sort({ fechaSolicitud: -1 })
-      .skip(skip)
-      .limit(parseInt(limit));
-
-    const total = await Solicitud.countDocuments(filtros);
-
-    res.status(200).json({
-      success: true,
-      data: {
-        solicitudes,
+      res.status(200).json({
+        success: true,
+        data: solicitudes,
         pagination: {
           currentPage: parseInt(page),
-          totalPages: Math.ceil(total / limit),
+          totalPages: Math.ceil(total / parseInt(limit)),
           totalItems: total,
           itemsPerPage: parseInt(limit)
+        },
+        estadisticas: estadisticas[0] || {
+          total: 0, nuevas: 0, enRevision: 0, urgentes: 0, completadas: 0
         }
+      });
+
+    } catch (error) {
+      console.error('Error al obtener solicitudes:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error interno del servidor',
+        error: error.message
+      });
+    }
+  };
+
+  // Obtener solicitud por ID
+  obtenerSolicitudPorId = async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      const solicitud = await Solicitud.findById(id);
+      
+      if (!solicitud) {
+        return res.status(404).json({
+          success: false,
+          message: 'Solicitud no encontrada'
+        });
       }
-    });
 
-  } catch (error) {
-    console.error('Error al obtener solicitudes:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error interno del servidor',
-      error: error.message
-    });
-  }
-};
+      res.status(200).json({
+        success: true,
+        data: solicitud
+      });
 
-/**
- * Obtener estadísticas de categorización
- * GET /api/categorizacion/estadisticas
- */
-const obtenerEstadisticas = async (req, res) => {
-  try {
-    const estadisticas = await Solicitud.obtenerEstadisticas();
-    
-    // Estadísticas adicionales por categoría
-    const porCategoria = await Solicitud.aggregate([
-      { $match: { activo: true } },
-      {
-        $group: {
-          _id: '$categoria',
-          cantidad: { $sum: 1 }
+    } catch (error) {
+      console.error('Error al obtener solicitud:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error interno del servidor',
+        error: error.message
+      });
+    }
+  };
+
+  // Crear nueva solicitud
+  crearSolicitud = async (req, res) => {
+    try {
+      // Validar errores de entrada
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({
+          success: false,
+          message: 'Datos de entrada inválidos',
+          errors: errors.array()
+        });
+      }
+
+      const {
+        solicitante,
+        email,
+        telefono,
+        tipoSolicitud,
+        categoria,
+        descripcion,
+        prioridad,
+        observaciones,
+        responsableAsignado
+      } = req.body;
+
+      // Verificar si ya existe una solicitud similar reciente
+      const solicitudExistente = await Solicitud.findOne({
+        email,
+        tipoSolicitud,
+        estado: { $in: ['Nueva', 'En Revisión'] },
+        fechaSolicitud: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } // Últimas 24 horas
+      });
+
+      if (solicitudExistente) {
+        return res.status(409).json({
+          success: false,
+          message: 'Ya existe una solicitud similar pendiente para este usuario'
+        });
+      }
+
+      const nuevaSolicitud = new Solicitud({
+        solicitante,
+        email,
+        telefono,
+        tipoSolicitud,
+        categoria: categoria || tipoSolicitud, // Si no se especifica categoría, usar el tipo
+        descripcion,
+        prioridad: prioridad || 'Media',
+        observaciones,
+        responsableAsignado,
+        creadoPor: req.user?.id // Si tienes autenticación
+      });
+
+      const solicitudGuardada = await nuevaSolicitud.save();
+
+      res.status(201).json({
+        success: true,
+        message: 'Solicitud creada exitosamente',
+        data: solicitudGuardada
+      });
+
+    } catch (error) {
+      console.error('Error al crear solicitud:', error);
+      
+      if (error.name === 'ValidationError') {
+        return res.status(400).json({
+          success: false,
+          message: 'Error de validación',
+          errors: Object.values(error.errors).map(err => ({
+            field: err.path,
+            message: err.message
+          }))
+        });
+      }
+
+      res.status(500).json({
+        success: false,
+        message: 'Error interno del servidor',
+        error: error.message
+      });
+    }
+  };
+
+  // Actualizar solicitud
+  actualizarSolicitud = async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      // Validar errores de entrada
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({
+          success: false,
+          message: 'Datos de entrada inválidos',
+          errors: errors.array()
+        });
+      }
+
+      const datosActualizacion = {
+        ...req.body,
+        modificadoPor: req.user?.id // Si tienes autenticación
+      };
+
+      const solicitudActualizada = await Solicitud.findByIdAndUpdate(
+        id,
+        datosActualizacion,
+        { 
+          new: true, 
+          runValidators: true 
         }
+      );
+
+      if (!solicitudActualizada) {
+        return res.status(404).json({
+          success: false,
+          message: 'Solicitud no encontrada'
+        });
       }
-    ]);
 
-    // Estadísticas por prioridad
-    const porPrioridad = await Solicitud.aggregate([
-      { $match: { activo: true } },
-      {
-        $group: {
-          _id: '$prioridad',
-          cantidad: { $sum: 1 }
-        }
+      res.status(200).json({
+        success: true,
+        message: 'Solicitud actualizada exitosamente',
+        data: solicitudActualizada
+      });
+
+    } catch (error) {
+      console.error('Error al actualizar solicitud:', error);
+      
+      if (error.name === 'ValidationError') {
+        return res.status(400).json({
+          success: false,
+          message: 'Error de validación',
+          errors: Object.values(error.errors).map(err => ({
+            field: err.path,
+            message: err.message
+          }))
+        });
       }
-    ]);
 
-    // Solicitudes categorizadas en los últimos 7 días
-    const fechaLimite = new Date();
-    fechaLimite.setDate(fechaLimite.getDate() - 7);
+      res.status(500).json({
+        success: false,
+        message: 'Error interno del servidor',
+        error: error.message
+      });
+    }
+  };
 
-    const categorizadasRecientes = await Solicitud.countDocuments({
-      fechaCategorizacion: { $gte: fechaLimite },
-      activo: true
-    });
-
-    res.status(200).json({
-      success: true,
-      data: {
-        general: estadisticas[0] || {},
-        porCategoria,
-        porPrioridad,
-        categorizadasRecientes
+  // Eliminar solicitud
+  eliminarSolicitud = async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      const solicitudEliminada = await Solicitud.findByIdAndDelete(id);
+      
+      if (!solicitudEliminada) {
+        return res.status(404).json({
+          success: false,
+          message: 'Solicitud no encontrada'
+        });
       }
-    });
 
-  } catch (error) {
-    console.error('Error al obtener estadísticas:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error interno del servidor',
-      error: error.message
-    });
-  }
-};
+      res.status(200).json({
+        success: true,
+        message: 'Solicitud eliminada exitosamente',
+        data: solicitudEliminada
+      });
 
-/**
- * Obtener una solicitud específica para categorizar
- * GET /api/categorizacion/solicitud/:id
- */
-const obtenerSolicitudPorId = async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const solicitud = await Solicitud.findById(id)
-      .populate('categorizadoPor', 'nombre email')
-      .populate('respondidoPor', 'nombre email');
-
-    if (!solicitud) {
-      return res.status(404).json({
+    } catch (error) {
+      console.error('Error al eliminar solicitud:', error);
+      res.status(500).json({
         success: false,
-        message: 'Solicitud no encontrada'
+        message: 'Error interno del servidor',
+        error: error.message
       });
     }
+  };
 
-    res.status(200).json({
-      success: true,
-      data: solicitud
-    });
+  // Categorizar solicitud (cambiar categoría)
+  categorizarSolicitud = async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { categoria } = req.body;
 
-  } catch (error) {
-    console.error('Error al obtener solicitud:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error interno del servidor',
-      error: error.message
-    });
-  }
-};
+      if (!categoria) {
+        return res.status(400).json({
+          success: false,
+          message: 'La categoría es requerida'
+        });
+      }
 
-/**
- * Categorizar una solicitud
- * PUT /api/categorizacion/categorizar/:id
- */
-const categorizarSolicitud = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { categoria, prioridad, estado, observaciones } = req.body;
-    const usuarioId = req.userId; // Del middleware de autenticación
-
-    // Validar datos requeridos
-    if (!categoria || !prioridad) {
-      return res.status(400).json({
-        success: false,
-        message: 'Categoría y prioridad son requeridas'
-      });
-    }
-
-    // Buscar la solicitud
-    const solicitud = await Solicitud.findById(id);
-
-    if (!solicitud) {
-      return res.status(404).json({
-        success: false,
-        message: 'Solicitud no encontrada'
-      });
-    }
-
-    if (!solicitud.activo) {
-      return res.status(400).json({
-        success: false,
-        message: 'No se puede categorizar una solicitud deshabilitada'
-      });
-    }
-
-    // Aplicar categorización
-    solicitud.categoria = categoria;
-    solicitud.prioridad = prioridad;
-    solicitud.observaciones = observaciones || solicitud.observaciones;
-    solicitud.categorizadoPor = usuarioId;
-    solicitud.fechaCategorizacion = new Date();
-
-    // Si se proporciona un nuevo estado, actualizarlo
-    if (estado && estado !== solicitud.estado) {
-      solicitud.estado = estado;
-      solicitud.respondidoPor = usuarioId;
-      solicitud.fechaRespuesta = new Date();
-    }
-
-    await solicitud.save();
-
-    // Poblar los datos para la respuesta
-    await solicitud.populate('categorizadoPor', 'nombre email');
-    await solicitud.populate('respondidoPor', 'nombre email');
-
-    res.status(200).json({
-      success: true,
-      message: 'Solicitud categorizada exitosamente',
-      data: solicitud
-    });
-
-  } catch (error) {
-    console.error('Error al categorizar solicitud:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error interno del servidor',
-      error: error.message
-    });
-  }
-};
-
-/**
- * Categorizar múltiples solicitudes en lote
- * PUT /api/categorizacion/categorizar-lote
- */
-const categorizarLote = async (req, res) => {
-  try {
-    const { solicitudes, categoria, prioridad, observaciones } = req.body;
-    const usuarioId = req.userId;
-
-    if (!solicitudes || !Array.isArray(solicitudes) || solicitudes.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Se requiere un array de IDs de solicitudes'
-      });
-    }
-
-    if (!categoria || !prioridad) {
-      return res.status(400).json({
-        success: false,
-        message: 'Categoría y prioridad son requeridas'
-      });
-    }
-
-    const resultado = await Solicitud.updateMany(
-      {
-        _id: { $in: solicitudes },
-        activo: true
-      },
-      {
-        $set: {
+      const solicitudActualizada = await Solicitud.findByIdAndUpdate(
+        id,
+        { 
           categoria,
-          prioridad,
-          observaciones: observaciones || '',
-          categorizadoPor: usuarioId,
-          fechaCategorizacion: new Date()
-        }
+          modificadoPor: req.user?.id
+        },
+        { new: true, runValidators: true }
+      );
+
+      if (!solicitudActualizada) {
+        return res.status(404).json({
+          success: false,
+          message: 'Solicitud no encontrada'
+        });
       }
-    );
 
-    res.status(200).json({
-      success: true,
-      message: `${resultado.modifiedCount} solicitudes categorizadas exitosamente`,
-      data: {
-        solicitudesActualizadas: resultado.modifiedCount,
-        solicitudesEncontradas: resultado.matchedCount
-      }
-    });
+      res.status(200).json({
+        success: true,
+        message: 'Solicitud categorizada exitosamente',
+        data: solicitudActualizada
+      });
 
-  } catch (error) {
-    console.error('Error al categorizar lote:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error interno del servidor',
-      error: error.message
-    });
-  }
-};
-
-/**
- * Eliminar categorización (volver a "Sin Categorizar")
- * DELETE /api/categorizacion/eliminar/:id
- */
-const eliminarCategorizacion = async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const solicitud = await Solicitud.findById(id);
-
-    if (!solicitud) {
-      return res.status(404).json({
+    } catch (error) {
+      console.error('Error al categorizar solicitud:', error);
+      res.status(500).json({
         success: false,
-        message: 'Solicitud no encontrada'
+        message: 'Error interno del servidor',
+        error: error.message
       });
     }
+  };
 
-    // Resetear categorización
-    solicitud.categoria = 'Sin Categorizar';
-    solicitud.prioridad = 'Normal';
-    solicitud.observaciones = '';
-    solicitud.categorizadoPor = undefined;
-    solicitud.fechaCategorizacion = undefined;
+  // Asignar responsable
+  asignarResponsable = async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { responsableAsignado } = req.body;
 
-    await solicitud.save();
+      const solicitudActualizada = await Solicitud.findByIdAndUpdate(
+        id,
+        { 
+          responsableAsignado,
+          estado: responsableAsignado ? 'En Revisión' : 'Nueva',
+          modificadoPor: req.user?.id
+        },
+        { new: true, runValidators: true }
+      );
 
-    res.status(200).json({
-      success: true,
-      message: 'Categorización eliminada exitosamente',
-      data: solicitud
-    });
-
-  } catch (error) {
-    console.error('Error al eliminar categorización:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error interno del servidor',
-      error: error.message
-    });
-  }
-};
-
-/**
- * Obtener historial de categorizaciones
- * GET /api/categorizacion/historial
- */
-const obtenerHistorialCategorizacion = async (req, res) => {
-  try {
-    const { page = 1, limit = 20 } = req.query;
-    const skip = (page - 1) * limit;
-
-    const historial = await Solicitud.find({
-      fechaCategorizacion: { $exists: true },
-      activo: true
-    })
-      .populate('categorizadoPor', 'nombre email')
-      .select('nombre email categoria prioridad fechaCategorizacion categorizadoPor observaciones')
-      .sort({ fechaCategorizacion: -1 })
-      .skip(skip)
-      .limit(parseInt(limit));
-
-    const total = await Solicitud.countDocuments({
-      fechaCategorizacion: { $exists: true },
-      activo: true
-    });
-
-    res.status(200).json({
-      success: true,
-      data: {
-        historial,
-        pagination: {
-          currentPage: parseInt(page),
-          totalPages: Math.ceil(total / limit),
-          totalItems: total,
-          itemsPerPage: parseInt(limit)
-        }
+      if (!solicitudActualizada) {
+        return res.status(404).json({
+          success: false,
+          message: 'Solicitud no encontrada'
+        });
       }
-    });
 
-  } catch (error) {
-    console.error('Error al obtener historial:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error interno del servidor',
-      error: error.message
-    });
-  }
-};
+      res.status(200).json({
+        success: true,
+        message: 'Responsable asignado exitosamente',
+        data: solicitudActualizada
+      });
 
-module.exports = {
-  obtenerSolicitudesParaCategorizar,
-  obtenerEstadisticas,
-  obtenerSolicitudPorId,
-  categorizarSolicitud,
-  categorizarLote,
-  eliminarCategorizacion,
-  obtenerHistorialCategorizacion
-};
+    } catch (error) {
+      console.error('Error al asignar responsable:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error interno del servidor',
+        error: error.message
+      });
+    }
+  };
+
+  // Obtener estadísticas por categoría
+  obtenerEstadisticasPorCategoria = async (req, res) => {
+    try {
+      const estadisticas = await Solicitud.aggregate([
+        {
+          $group: {
+            _id: '$categoria',
+            total: { $sum: 1 },
+            nuevas: { $sum: { $cond: [{ $eq: ['$estado', 'Nueva'] }, 1, 0] } },
+            enRevision: { $sum: { $cond: [{ $eq: ['$estado', 'En Revisión'] }, 1, 0] } },
+            completadas: { $sum: { $cond: [{ $eq: ['$estado', 'Completada'] }, 1, 0] } },
+            urgentes: { $sum: { $cond: [{ $eq: ['$prioridad', 'Urgente'] }, 1, 0] } }
+          }
+        },
+        {
+          $sort: { total: -1 }
+        }
+      ]);
+
+      res.status(200).json({
+        success: true,
+        data: estadisticas
+      });
+
+    } catch (error) {
+      console.error('Error al obtener estadísticas:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error interno del servidor',
+        error: error.message
+      });
+    }
+  };
+

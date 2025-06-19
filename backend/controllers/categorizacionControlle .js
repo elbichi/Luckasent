@@ -1,5 +1,5 @@
 // controllers/categoriaSolicitudController.js
-const CategoriaSolicitud = require('../models/CategoriaSolicitud');
+const CategoriaSolicitud = require('../models/categorizacion ');
 const Solicitud = require('../models/Solicitud');
 
 // CREAR nueva categoría
