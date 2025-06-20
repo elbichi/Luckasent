@@ -5,6 +5,7 @@ const Categorizacion = require('../models/categorizacion');
 exports.getAllEvents = async (req, res) => {
     try {
         const events = await Evento.find({ active: true }).populate('categoria');
+        console.log('Eventos encontrados:', events.length);
         res.status(200).json({ success: true, data: events });
     } catch (error) {
         res.status(500).json({ success: false, message: 'Error al obtener eventos', error: error.message });

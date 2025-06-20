@@ -7,11 +7,12 @@ const { authJwt, role } = require('../middlewares');
 router.use(authJwt.verifyToken);
 
 // Permitir a todos los roles menos admin (ajusta según tu lógica)
-const allowedRoles = ['tesorero', 'participante', 'seminarista', 'logistico', 'externo'];
+const allowedRoles = ['admin', 'tesorero', 'participante', 'seminarista', 'logistico', 'externo'];
 
 // CRUD
 router.post('/', role.checkRole(...allowedRoles), cabanasController.crearCabana);
 router.get('/', role.checkRole(...allowedRoles), cabanasController.obtenerCabanas);
+router.get('/:id',role.checkRole(...allowedRoles), cabanasController.obtenerCabanaPorId);
 router.put('/:id', role.checkRole(...allowedRoles), cabanasController.actualizarCabana);
 router.delete('/:id', role.checkRole(...allowedRoles), cabanasController.eliminarCabana);
 

@@ -20,6 +20,18 @@ exports.obtenerCabanas = async (req, res) => {
   }
 };
 
+exports.obtenerCabanaPorId = async (req, res) => {
+  try {
+    const cabana = await Cabana.findById(req.params.id);
+    if (!cabana) {
+      return res.status(404).json({ success: false, message: 'Cabaña no encontrada' });
+    }
+    res.json({ success: true, data: cabana });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+};
+
 exports.actualizarCabana = async (req, res) => {
   try {
     const cabana = await Cabana.findByIdAndUpdate(req.params.id, req.body, { new: true });

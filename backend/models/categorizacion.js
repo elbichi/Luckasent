@@ -33,7 +33,7 @@ const categoriaSolicitudSchema = new mongoose.Schema({
   },
   creadoPor: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Usuarios'
+    ref: 'usuarios'
   }
 }, {
   timestamps: true // Crea automáticamente createdAt y updatedAt

@@ -48,6 +48,10 @@ const eventoSchema = new mongoose.Schema({
   },
   fechaCategorizacion: {
     type: Date
+  },
+  active: {
+    type: Boolean,
+    default: true
   }
 }, {
   timestamps: true,
