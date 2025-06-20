@@ -2,13 +2,26 @@ const express = require('express');
 const router = express.Router();
 const eventosController = require('../controllers/eventosController');
 const { authJwt, role } = require('../middlewares');
+const { body } = require('express-validator');
+
+// Validaciones para el evento
+const validarEvento = [
+  body('name').notEmpty().withMessage('El nombre es obligatorio'),
+  body('description').notEmpty().withMessage('La descripción es obligatoria'),
+  body('price').isNumeric().withMessage('El precio debe ser numérico'),
+  body('categoria').isMongoId().withMessage('ID de categoría inválido')
+];
 
 // Listar todos los eventos
 router.get('/', eventosController.getAllEvents);
 // Obtener evento por ID
 router.get('/:id', eventosController.getEventById);
 // Crear evento (solo admin y logistico)
-router.post('/', [authJwt.verifyToken, role.checkRole('admin', 'logistico')], eventosController.createEvent);
+router.post(
+  '/',
+  [authJwt.verifyToken, role.checkRole('admin', 'logistico'), validarEvento],
+  eventosController.createEvent
+);
 // Actualizar evento (solo admin y logistico)
 router.put('/:id', [authJwt.verifyToken, role.checkRole('admin', 'logistico')], eventosController.updateEvent);
 // Eliminar evento (solo admin)

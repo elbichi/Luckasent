@@ -1,9 +1,8 @@
 const Solicitud = require('../models/Solicitud');
-const { validationResult } = require('express-validator'); // Añadir esta línea
+const { validationResult } = require('express-validator');
 
-
-  // Obtener todas las solicitudes con filtros
-  obtenerSolicitudes = async (req, res) => {
+// Obtener todas las solicitudes con filtros
+exports.obtenerSolicitudes = async (req, res) => {
     try {
       const { 
         categoria, 
@@ -88,7 +87,7 @@ const { validationResult } = require('express-validator'); // Añadir esta líne
   };
 
   // Obtener solicitud por ID
-  obtenerSolicitudPorId = async (req, res) => {
+  exports.obtenerSolicitudPorId = async (req, res) => {
     try {
       const { id } = req.params;
       
@@ -161,7 +160,7 @@ const { validationResult } = require('express-validator'); // Añadir esta líne
   };
 
   // Actualizar solicitud
-  actualizarSolicitud = async (req, res) => {
+  exports.actualizarSolicitud = async (req, res) => {
     try {
       const { id } = req.params;
       
@@ -225,37 +224,25 @@ const { validationResult } = require('express-validator'); // Añadir esta líne
   };
 
   // Eliminar solicitud
-  eliminarSolicitud = async (req, res) => {
+  exports.eliminarSolicitud = async (req, res) => {
     try {
-      const { id } = req.params;
-      
-      const solicitudEliminada = await Solicitud.findByIdAndDelete(id);
-      
-      if (!solicitudEliminada) {
-        return res.status(404).json({
-          success: false,
-          message: 'Solicitud no encontrada'
-        });
+      const solicitud = await Solicitud.findById(req.params.id);
+      if (!solicitud) {
+        return res.status(404).json({ success: false, message: 'Solicitud no encontrada' });
       }
-
-      res.status(200).json({
-        success: true,
-        message: 'Solicitud eliminada exitosamente',
-        data: solicitudEliminada
-      });
-
+      // Solo admin o creador puede eliminar
+      if (req.userRole !== 'admin' && solicitud.creadoPor.toString() !== req.userId) {
+        return res.status(403).json({ success: false, message: 'No autorizado' });
+      }
+      await solicitud.deleteOne();
+      res.status(200).json({ success: true, message: 'Solicitud eliminada exitosamente' });
     } catch (error) {
-      console.error('Error al eliminar solicitud:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Error interno del servidor',
-        error: error.message
-      });
+      res.status(500).json({ success: false, message: 'Error interno del servidor', error: error.message });
     }
   };
 
   // Categorizar solicitud (cambiar categoría)
-  categorizarSolicitud = async (req, res) => {
+  exports.categorizarSolicitud = async (req, res) => {
     try {
       const { id } = req.params;
       const { categoria } = req.body;
@@ -300,7 +287,7 @@ const { validationResult } = require('express-validator'); // Añadir esta líne
   };
 
   // Asignar responsable
-  asignarResponsable = async (req, res) => {
+  exports.asignarResponsable = async (req, res) => {
     try {
       const { id } = req.params;
       const { responsableAsignado } = req.body;
@@ -339,7 +326,7 @@ const { validationResult } = require('express-validator'); // Añadir esta líne
   };
 
   // Obtener estadísticas por categoría
-  obtenerEstadisticasPorCategoria = async (req, res) => {
+  exports.obtenerEstadisticasPorCategoria = async (req, res) => {
     try {
       const estadisticas = await Solicitud.aggregate([
         {
@@ -371,4 +358,22 @@ const { validationResult } = require('express-validator'); // Añadir esta líne
       });
     }
   };
+
+  // Consultar solicitudes por usuario autenticado
+exports.obtenerSolicitudesPorUsuario = async (req, res) => {
+  try {
+    // Busca solicitudes creadas por el usuario autenticado
+    const solicitudes = await Solicitud.find({ creadoPor: req.userId });
+    res.status(200).json({
+      success: true,
+      data: solicitudes
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error al obtener tus solicitudes',
+      error: error.message
+    });
+  }
+};
 

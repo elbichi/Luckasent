@@ -1,9 +1,10 @@
-const Events = require('../models/Eventos');
+const Evento = require('../models/Eventos');
+const Categorizacion = require('../models/categorizacion');
 
 // Obtener todos los eventos
 exports.getAllEvents = async (req, res) => {
     try {
-        const events = await Events.find({ active: true }).populate('category');
+        const events = await Evento.find({ active: true }).populate('categoria');
         res.status(200).json({ success: true, data: events });
     } catch (error) {
         res.status(500).json({ success: false, message: 'Error al obtener eventos', error: error.message });
@@ -13,7 +14,7 @@ exports.getAllEvents = async (req, res) => {
 // Obtener evento por ID
 exports.getEventById = async (req, res) => {
     try {
-        const event = await Events.findById(req.params.id).populate('category');
+        const event = await Evento.findById(req.params.id).populate('categoria');
         if (!event) {
             return res.status(404).json({ success: false, message: 'Evento no encontrado' });
         }
@@ -26,8 +27,8 @@ exports.getEventById = async (req, res) => {
 // Crear nuevo evento
 exports.createEvent = async (req, res) => {
     try {
-        const { name, description, price, category, images } = req.body;
-        const event = new Events({ name, description, price, category, images });
+        const { name, description, price, categoria, images } = req.body;
+        const event = new Evento({ name, description, price, categoria, images });
         const savedEvent = await event.save();
         res.status(201).json({ success: true, data: savedEvent });
     } catch (error) {
@@ -38,7 +39,7 @@ exports.createEvent = async (req, res) => {
 // Actualizar evento
 exports.updateEvent = async (req, res) => {
     try {
-        const updatedEvent = await Events.findByIdAndUpdate(
+        const updatedEvent = await Evento.findByIdAndUpdate(
             req.params.id,
             { $set: req.body },
             { new: true }
@@ -55,7 +56,7 @@ exports.updateEvent = async (req, res) => {
 // Eliminar evento
 exports.deleteEvent = async (req, res) => {
     try {
-        const deletedEvent = await Events.findByIdAndDelete(req.params.id);
+        const deletedEvent = await Evento.findByIdAndDelete(req.params.id);
         if (!deletedEvent) {
             return res.status(404).json({ success: false, message: 'Evento no encontrado' });
         }
@@ -68,7 +69,7 @@ exports.deleteEvent = async (req, res) => {
 // Deshabilitar evento (solo admin)
 exports.disableEvent = async (req, res) => {
     try {
-        const event = await Events.findByIdAndUpdate(
+        const event = await Evento.findByIdAndUpdate(
             req.params.id,
             { active: false },
             { new: true }
@@ -97,7 +98,7 @@ exports.categorizarEvento = async (req, res) => {
     }
 
     // Actualizar evento con la categorización
-    const eventoActualizado = await Events.findByIdAndUpdate(
+    const eventoActualizado = await Evento.findByIdAndUpdate(
       id,
       {
         categoria,
@@ -138,7 +139,7 @@ exports.getEventosPorCategoria = async (req, res) => {
     
     const filtro = categoria ? { categoria } : {};
     
-    const eventos = await Events.find(filtro)
+    const eventos = await Evento.find(filtro)
       .populate('categorizadoPor', 'username email')
       .sort({ fechaCategorizacion: -1 });
 

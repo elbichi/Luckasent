@@ -1,34 +1,32 @@
 const mongoose =require('mongoose');
 
-const registrationsSchema = new mongoose.Schema({
-    name:{
-        type: String,
-        required:[true, ' El nombre es obligatorio'],
-        trim: true,
-        unique:true
-    },
-    description:{
-        type: String,
-        required:[true,'La descripcion es requerida'],
-        trim: true
-    },
-    category:{
+const inscripcionSchema = new mongoose.Schema({
+    usuario:{
         type: mongoose.Schema.Types.ObjectId,
-        ref:'Category',
-        required:[true,'La categoria es requerida']
+        ref: 'usuario',
+        required:true,
+    },
+    evento:{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Evento',
+        required:true,
+    },
+    fechaInscripcion:{
+        type: Date,
+        deafault: Date.now,
+    },
+    estado:{
+        type: String,
+        enum: ['pendiente', 'aprobada', 'rechazada', 'cancelada'],
+        default: 'pendiente',
+    },
+    observaciones:{
+        type: String,
+        trim: true,
     }
-
     },{
         timestamps: true,
-        versionKey: false
     });
 //Manejo de errores de duplicado
-registrationsSchema.post('save', function(error,doc,next)
-{
-    if(error.name === 'MongoServerError' && error.code ===11000){
-        next(new Error('Ya existe una subcategoria con ese nombre'));
-    }else{
-        next(error);
-    }
-});
-module.exports = mongoose.model('Registrations', registrationsSchema);
+
+module.exports = mongoose.model('Inscripcion', inscripcionSchema);
