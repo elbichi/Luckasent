@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const reservaSchema = new mongoose.Schema({
     usuario:{
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Usuario',
+        ref: 'usuarios', // <-- corregido
         required: [true, 'El usuario es obligatorio']
     },
     recurso: {
@@ -20,12 +20,21 @@ const reservaSchema = new mongoose.Schema({
     },
     estado:{
         type: String,
-        emnum: ['Pendiente', 'Confirmada', 'Cancelada', 'finalizada'],
+        enum: ['Pendiente', 'Confirmada', 'Cancelada', 'finalizada'],
         default: 'Pendiente'
     },
     observaciones:{
         type: String,
         trim: true
+    },
+    categoria: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Categorizacion',
+        required: false // o true si es obligatorio
+    },
+    solicitud: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Solicitud'
     }
 },{
     timestamps: true

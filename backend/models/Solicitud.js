@@ -2,9 +2,9 @@ const mongoose = require('mongoose');
 
 const solicitudSchema = new mongoose.Schema({
   solicitante: {
-    type: String,
-    required: [true, 'El nombre del solicitante es obligatorio'],
-    trim: true
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'usuarios',
+    required: true
   },
   email: {
     type: String,
@@ -58,16 +58,16 @@ const solicitudSchema = new mongoose.Schema({
   },
   responsable: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'usuario', // Persona o rol que lo envió
+    ref: 'usuarios', // Persona o rol que lo envió
     required: true
   },
   creadoPor: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'usuario'
+    ref: 'usuarios'
   },
   modificadoPor: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'usuario'
+    ref: 'usuarios'
   }
 }, {
   timestamps: true

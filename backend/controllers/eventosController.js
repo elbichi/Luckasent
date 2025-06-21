@@ -1,5 +1,7 @@
 const Evento = require('../models/Eventos');
 const Categorizacion = require('../models/categorizacion');
+const Usuario = require('../models/User');
+const mongoose = require('mongoose');
 
 // Obtener todos los eventos
 exports.getAllEvents = async (req, res) => {
@@ -27,9 +29,47 @@ exports.getEventById = async (req, res) => {
 
 // Crear nuevo evento
 exports.createEvent = async (req, res) => {
-    try {
-        const { name, description, price, categoria, images } = req.body;
-        const event = new Evento({ name, description, price, categoria, images });
+       try {
+        const { name, description, price, categoria, images, subCategoria, etiquetas, prioridad, observaciones, categorizadoPor, fechaCategorizacion, active } = req.body;
+
+        // Validar que categoria sea un ObjectId válido
+        if (!mongoose.Types.ObjectId.isValid(categoria)) {
+            return res.status(400).json({ success: false, message: 'ID de categoría inválido.' });
+        }
+        // Validar que categorizadoPor sea un ObjectId válido si viene en el body
+        if (categorizadoPor && !mongoose.Types.ObjectId.isValid(categorizadoPor)) {
+            return res.status(400).json({ success: false, message: 'ID de usuario categorizador inválido.' });
+        }
+
+        // Verificar que la categoría exista
+        const categoriaExiste = await Categorizacion.findById(categoria);
+        if (!categoriaExiste) {
+            return res.status(404).json({ success: false, message: 'La categoría no existe.' });
+        }
+
+        // Verificar que el usuario categorizadoPor exista (si viene en el body)
+        if (categorizadoPor) {
+            const usuarioExiste = await Usuario.findById(categorizadoPor);
+            if (!usuarioExiste) {
+                return res.status(404).json({ success: false, message: 'El usuario categorizador no existe.' });
+            }
+        }
+
+        // Crear el evento
+        const event = new Evento({
+            name,
+            description,
+            price,
+            categoria,
+            images,
+            subCategoria,
+            etiquetas,
+            prioridad,
+            observaciones,
+            categorizadoPor,
+            fechaCategorizacion,
+            active
+        });
         const savedEvent = await event.save();
         res.status(201).json({ success: true, data: savedEvent });
     } catch (error) {

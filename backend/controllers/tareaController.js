@@ -1,21 +1,48 @@
 const Tarea = require('../models/Tarea');
+const Usuario = require('../models/User');
+const mongoose = require('mongoose');
 
 // Crear tarea
 exports.crearTarea = async (req, res) => {
    try {
-        const nuevaTarea = new Tarea({
-            titulo: req.body.titulo,
-            descripcion: req.body.descripcion,
-            estado: req.body.estado,
-            prioridad: req.body.prioridad,
-            asignadoA: req.body.asignadoA,
-            asignadoPor: req.userId, // Se obtiene del token JWT
-            fechaLimite: req.body.fechaLimite,
-            comentarios: req.body.comentarios
-        });
-        
+        const { asignadoA, asignadoPor, comentarios } = req.body;
+
+        // Validar que los IDs sean ObjectId válidos
+        if (!mongoose.Types.ObjectId.isValid(asignadoA)) {
+            return res.status(400).json({ success: false, message: 'ID de usuario asignado inválido' });
+        }
+        if (!mongoose.Types.ObjectId.isValid(asignadoPor)) {
+            return res.status(400).json({ success: false, message: 'ID de usuario que asigna inválido' });
+        }
+
+        // Verificar que los usuarios existan
+        const usuarioAsignado = await Usuario.findById(asignadoA);
+        if (!usuarioAsignado) {
+            return res.status(404).json({ success: false, message: 'El usuario asignado no existe' });
+        }
+        const usuarioAsignador = await Usuario.findById(asignadoPor);
+        if (!usuarioAsignador) {
+            return res.status(404).json({ success: false, message: 'El usuario que asigna no existe' });
+        }
+
+        // Validar autores de comentarios si existen
+        if (comentarios && Array.isArray(comentarios)) {
+            for (const comentario of comentarios) {
+                if (comentario.autor && !mongoose.Types.ObjectId.isValid(comentario.autor)) {
+                    return res.status(400).json({ success: false, message: 'ID de autor de comentario inválido' });
+                }
+                if (comentario.autor) {
+                    const autorExiste = await Usuario.findById(comentario.autor);
+                    if (!autorExiste) {
+                        return res.status(404).json({ success: false, message: 'El autor del comentario no existe' });
+                    }
+                }
+            }
+        }
+
+        const nuevaTarea = new Tarea(req.body);
         await nuevaTarea.save();
-        
+
         // Populamos los campos de usuario para la respuesta
         const tareaPoblada = await Tarea.findById(nuevaTarea._id)
             .populate('asignadoA', 'username email')

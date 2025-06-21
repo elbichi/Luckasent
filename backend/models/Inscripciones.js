@@ -1,32 +1,40 @@
-const mongoose =require('mongoose');
+const mongoose = require('mongoose');
 
 const inscripcionSchema = new mongoose.Schema({
-    usuario:{
+    usuario: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'usuario',
-        required:true,
+        ref: 'usuarios', // Debe coincidir con User.js
+        required: true,
     },
-    evento:{
+    evento: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Evento',
-        required:true,
+        ref: 'Eventos', // Debe coincidir con Eventos.js
+        required: true,
     },
-    fechaInscripcion:{
+    categoria: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Categorizacion',
+        required: true,
+    },
+    fechaInscripcion: {
         type: Date,
-        deafault: Date.now,
+        default: Date.now,
     },
-    estado:{
+    estado: {
         type: String,
         enum: ['pendiente', 'aprobada', 'rechazada', 'cancelada'],
         default: 'pendiente',
     },
-    observaciones:{
+    observaciones: {
         type: String,
         trim: true,
+    },
+    solicitud: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Solicitud'
     }
-    },{
-        timestamps: true,
-    });
-//Manejo de errores de duplicado
+}, {
+    timestamps: true,
+});
 
 module.exports = mongoose.model('Inscripcion', inscripcionSchema);
