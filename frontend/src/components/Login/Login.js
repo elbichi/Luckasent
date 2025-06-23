@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { authService } from '../../services/authService';
 import './Login.css'; // Crearemos este archivo después
 
 const Login = () => {
@@ -9,23 +10,17 @@ const Login = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
- const handleSubmit = async (e) => {
-  e.preventDefault();
-  setError('');
-  
-  try {
-    const response = await axios.post('http://localhost:3000/api/auth/signin', { // Nota el /api aquí
-      email,
-      password
-    });
-    
-    localStorage.setItem('token', response.data.accessToken);
-    navigate('/dashboard');
-    
-  } catch (err) {
-    setError(err.response?.data?.message || 'Error al iniciar sesión');
-  }
-};
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    try {
+      const data = await authService.login(email, password);
+      localStorage.setItem('token', data.token);
+      navigate('/admin/users');
+    } catch (err) {
+      setError(err.message || 'Error al iniciar sesión');
+    }
+  };
   return (
     <div className="login-container">
         <div className="container">
@@ -59,7 +54,7 @@ const Login = () => {
                 required
               />
        
-            <button type="submit" className="btn-primary">
+            <button type="submit" className="btn-primary_1">
               Ingresar
             </button>
             <button type="button" className="btn-google" onClick={() => window.location.href='/auth/google'}>

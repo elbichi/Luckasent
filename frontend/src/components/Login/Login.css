@@ -25,16 +25,13 @@
 .logo {
 
     position: absolute;
-    /* Fijar el logo en la parte superior izquierda */
     top: 20px;
-    /* Distancia desde la parte superior */
     left: 20px;
-    /* Distancia desde la izquierda */
     width: 167px;
     height: auto;
     font-size: 0px;
     z-index: 10;
-    /* Asegurar que esté sobre otros elementos */
+   
 }
 
 .luckas {
@@ -117,7 +114,7 @@ input {
     box-sizing: border-box;
 }
 
-.btn-primary {
+.btn-primary_1 {
     background-color: #0033FF;
     text-decoration: none;
     color: white;

@@ -32,13 +32,31 @@ exports.getUserById = async(req, res)=>{
             });
         }
         // Validaciones de acceso
-        if (req.userRole === 'auxiliar' && req.userId !== user._id.toString()){
+        if (req.userRole === 'tesorero' && req.userId !== user._id.toString()){
             return res.status(403).json({
                 success: false,
                 message:'No puedes ver usuario admin'
             });
         }
-        if(req.userRole === 'coordinador' && user.role === 'admin'){
+        if (req.userRole === 'participante' && req.userId !== user._id.toString()){
+            return res.status(403).json({
+                success: false,
+                message:'No puedes ver usuario admin'
+            });
+        }
+        if (req.userRole === 'seminarista' && req.userId !== user._id.toString()){
+            return res.status(403).json({
+                success: false,
+                message:'No puedes ver usuario admin'
+            });
+        }
+        if (req.userRole === 'logistico' && req.userId !== user._id.toString()){
+            return res.status(403).json({
+                success: false,
+                message:'No puedes ver usuario admin'
+            });
+        }
+        if(req.userRole === 'externo' && user.role === 'admin'){
             return res.status(403).json({
                 success: false,
                 message:'No puedes ver usuario admin'
@@ -59,11 +77,13 @@ exports.getUserById = async(req, res)=>{
 //Crear usurio (Admin y Coordinador)
 exports.createUser = async (req, res )=> {
     try{
-        const {username, email, password,role} = req.body;
+        const {username, lasname, email,phone, password,role} = req.body;
 
         const user = new User({
             username,
+            lasname,
             email,
+            phone,
             password: await bcrypt.hash(password,10),
             role
         });
@@ -74,7 +94,9 @@ exports.createUser = async (req, res )=> {
             user:{
                 id: savedUser._id,
                 username: savedUser.username,
+                lasname: savedUser.lasname,
                 email: savedUser.email,
+                phone: savedUser.phone,
                 role:savedUser.role
             }
         });
