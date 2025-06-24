@@ -2,6 +2,8 @@ import { useState, useEffect } from "react"
 import { userService } from "../../services/userService";
 import { inscripcionService } from "../../services/inscripcionService";
 import { solicitudService } from "../../services/solicirudService";
+import { eventService } from "../../services/eventService";
+import { tareaService } from "../../services/tareaService";
 import "./Dashboard.css"
 
 const Dashboard = ({ usuario, onCerrarSesion }) => {
@@ -53,6 +55,39 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
   });
   const [modoEdicionInscripcion, setModoEdicionInscripcion] = useState(false);
   const [inscripcionSeleccionada, setInscripcionSeleccionada] = useState(null);
+  //----------------------------------------------------------------------------------------------------------
+  // Estados para eventos
+  const [eventos, setEventos] = useState([]);
+  const [nuevoEvento, setNuevoEvento] = useState({
+    name: "",
+    description: "",
+    price: 0,
+    categoria: "",
+    subCategoria: "",
+    etiquetas: [],
+    images: "",
+    prioridad: "Normal",
+    observaciones: "",
+    active: true
+  });
+  const [modoEdicionEvento, setModoEdicionEvento] = useState(false);
+  const [eventoSeleccionado, setEventoSeleccionado] = useState(null);
+  const [categorias, setCategorias] = useState([]);
+  //----------------------------------------------------------------------------------------------------------
+  // Estados para tareas
+  const [tareas, setTareas] = useState([]);
+  const [nuevaTarea, setNuevaTarea] = useState({
+    titulo: "",
+    descripcion: "",
+    estado: "pendiente",
+    prioridad: "media",
+    asignadoA: "",
+    asignadoPor: "",
+    fechaLimite: "",
+    comentarios: []
+  });
+  const [modoEdicionTarea, setModoEdicionTarea] = useState(false);
+  const [tareaSeleccionada, setTareaSeleccionada] = useState(null);
   //----------------------------------------------------------------------------------------------------------
   // Obtener usuarios
   const obtenerUsuarios = async () => {
@@ -329,7 +364,222 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
     }
   }, [seccionActiva]);
 
+  //-----------------------------------------------------------------------------------------------------------
+  // FUNCIONES PARA GESTIÓN DE EVENTOS
 
+  // Obtener todos los eventos
+  const obtenerEventos = async () => {
+    try {
+      const data = await eventService.getAllEvents();
+      setEventos(Array.isArray(data.data) ? data.data : []);
+    } catch (error) {
+      alert("Error al obtener eventos: " + error.message);
+    }
+  };
+
+  // Crear evento
+  const crearEvento = async () => {
+    try {
+      await eventService.createEvent(nuevoEvento);
+      alert("Evento creado exitosamente");
+      setMostrarModal(false);
+      setNuevoEvento({
+        name: "",
+        description: "",
+        price: 0,
+        categoria: "",
+        subCategoria: "",
+        etiquetas: [],
+        images: "",
+        prioridad: "Normal",
+        observaciones: "",
+        active: true
+      });
+      obtenerEventos();
+    } catch (error) {
+      alert(`Error al crear el evento: ${error.message}`);
+    }
+  };
+
+  // Actualizar evento
+  const actualizarEvento = async () => {
+    try {
+      await eventService.updateEvent(eventoSeleccionado._id, eventoSeleccionado);
+      alert("Evento actualizado exitosamente");
+      setMostrarModal(false);
+      setEventoSeleccionado(null);
+      setModoEdicionEvento(false);
+      obtenerEventos();
+    } catch (error) {
+      alert(`Error al actualizar evento: ${error.message}`);
+    }
+  };
+
+  // Eliminar evento
+  const eliminarEvento = async (id) => {
+    if (!window.confirm("¿Estás seguro de que quieres eliminar este evento?")) return;
+    try {
+      await eventService.deleteEvent(id);
+      alert("Evento eliminado exitosamente");
+      obtenerEventos();
+    } catch (error) {
+      alert(`Error al eliminar evento: ${error.message}`);
+    }
+  };
+
+  // Deshabilitar evento
+  const deshabilitarEvento = async (id) => {
+    if (!window.confirm("¿Estás seguro de que quieres deshabilitar este evento?")) return;
+    try {
+      await eventService.disableEvent(id);
+      alert("Evento deshabilitado exitosamente");
+      obtenerEventos();
+    } catch (error) {
+      alert(`Error al deshabilitar evento: ${error.message}`);
+    }
+  };
+
+  // Abrir modal para crear evento
+  const abrirModalCrearEvento = () => {
+    setModoEdicionEvento(false);
+    setNuevoEvento({
+      name: "",
+      description: "",
+      price: 0,
+      categoria: "",
+      subCategoria: "",
+      etiquetas: [],
+      images: "",
+      prioridad: "Normal",
+      observaciones: "",
+      active: true
+    });
+    setMostrarModal(true);
+  };
+
+  // Abrir modal para editar evento
+  const abrirModalEditarEvento = (evento) => {
+    setModoEdicionEvento(true);
+    setEventoSeleccionado({ 
+      ...evento,
+      etiquetas: Array.isArray(evento.etiquetas) ? evento.etiquetas : []
+    });
+    setMostrarModal(true);
+  };
+
+  // Cargar eventos cuando se activa la sección
+  useEffect(() => {
+    if (seccionActiva === "eventos") {
+      obtenerEventos();
+    }
+  }, [seccionActiva]);
+
+  //-----------------------------------------------------------------------------------------------------------
+  // FUNCIONES PARA GESTIÓN DE TAREAS
+
+  // Obtener todas las tareas
+  const obtenerTareas = async () => {
+    try {
+      const data = await tareaService.getAll();
+      setTareas(Array.isArray(data) ? data : []);
+    } catch (error) {
+      alert("Error al obtener tareas: " + error.message);
+    }
+  };
+
+  // Crear tarea
+  const crearTarea = async () => {
+    try {
+      await tareaService.create(nuevaTarea);
+      alert("Tarea creada exitosamente");
+      setMostrarModal(false);
+      setNuevaTarea({
+        titulo: "",
+        descripcion: "",
+        estado: "pendiente",
+        prioridad: "media",
+        asignadoA: "",
+        asignadoPor: "",
+        fechaLimite: "",
+        comentarios: []
+      });
+      obtenerTareas();
+    } catch (error) {
+      alert(`Error al crear la tarea: ${error.message}`);
+    }
+  };
+
+  // Actualizar tarea
+  const actualizarTarea = async () => {
+    try {
+      await tareaService.update(tareaSeleccionada._id, tareaSeleccionada);
+      alert("Tarea actualizada exitosamente");
+      setMostrarModal(false);
+      setTareaSeleccionada(null);
+      setModoEdicionTarea(false);
+      obtenerTareas();
+    } catch (error) {
+      alert(`Error al actualizar tarea: ${error.message}`);
+    }
+  };
+
+  // Eliminar tarea
+  const eliminarTarea = async (id) => {
+    if (!window.confirm("¿Estás seguro de que quieres eliminar esta tarea?")) return;
+    try {
+      await tareaService.delete(id);
+      alert("Tarea eliminada exitosamente");
+      obtenerTareas();
+    } catch (error) {
+      alert(`Error al eliminar tarea: ${error.message}`);
+    }
+  };
+
+  // Cambiar estado de tarea
+  const cambiarEstadoTarea = async (id, nuevoEstado) => {
+    try {
+      await tareaService.cambiarEstado(id, nuevoEstado);
+      alert(`Estado de tarea cambiado a: ${nuevoEstado}`);
+      obtenerTareas();
+    } catch (error) {
+      alert(`Error al cambiar estado: ${error.message}`);
+    }
+  };
+
+  // Abrir modal para crear tarea
+  const abrirModalCrearTarea = () => {
+    setModoEdicionTarea(false);
+    setNuevaTarea({
+      titulo: "",
+      descripcion: "",
+      estado: "pendiente",
+      prioridad: "media",
+      asignadoA: "",
+      asignadoPor: "",
+      fechaLimite: "",
+      comentarios: []
+    });
+    setMostrarModal(true);
+  };
+
+  // Abrir modal para editar tarea
+  const abrirModalEditarTarea = (tarea) => {
+    setModoEdicionTarea(true);
+    setTareaSeleccionada({ 
+      ...tarea,
+      fechaLimite: tarea.fechaLimite ? new Date(tarea.fechaLimite).toISOString().split('T')[0] : ""
+    });
+    setMostrarModal(true);
+  };
+
+  // Cargar tareas cuando se activa la sección
+  useEffect(() => {
+    if (seccionActiva === "tareas") {
+      obtenerTareas();
+    }
+  }, [seccionActiva]);
+
+  //-----------------------------------------------------------------------------------------------------------
   if (cargando) {
     return (
       <div className="cargando-contenedor">
@@ -741,7 +991,7 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
             <div className="seccion-usuarios">
               <div className="seccion-header">
                 <h2>Gestión de Eventos</h2>
-                <button className="btn-primary" onClick={abrirModalCrear}>
+                <button className="btn-primary" onClick={abrirModalCrearEvento}>
                   ➕ Nuevo Evento
                 </button>
               </div>
@@ -750,26 +1000,69 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
                 <table className="tabla-usuarios">
                   <thead>
                     <tr>
+                      <th>ID</th>
                       <th>Nombre</th>
                       <th>Descripción</th>
+                      <th>Precio</th>
                       <th>Categoría</th>
+                      <th>SubCategoría</th>
+                      <th>Prioridad</th>
+                      <th>Estado</th>
+                      <th>Etiquetas</th>
+                      <th>Fecha Creación</th>
                       <th>Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
-
+                    {eventos.map((evento) => (
+                      <tr key={evento._id}>
+                        <td>{evento._id}</td>
+                        <td>{evento.name}</td>
+                        <td>{evento.description?.substring(0, 50)}...</td>
+                        <td>${evento.price?.toLocaleString()}</td>
+                        <td>{evento.categoria?.nombre || "Sin categoría"}</td>
+                        <td>{evento.subCategoria || "N/A"}</td>
+                        <td>
+                          <span className={`badge-prioridad prioridad-${evento.prioridad?.toLowerCase()}`}>
+                            {evento.prioridad}
+                          </span>
+                        </td>
+                        <td>
+                          <span className={`badge-estado estado-${evento.active ? "activo" : "inactivo"}`}>
+                            {evento.active ? "Activo" : "Inactivo"}
+                          </span>
+                        </td>
+                        <td>
+                          {evento.etiquetas?.slice(0, 2).join(", ")}
+                          {evento.etiquetas?.length > 2 && "..."}
+                        </td>
+                        <td>{evento.createdAt ? new Date(evento.createdAt).toLocaleDateString() : "N/A"}</td>
+                        <td>
+                          <div className="acciones-botones">
+                            <button className="btn-editar" onClick={() => abrirModalEditarEvento(evento)}>
+                              ✏️
+                            </button>
+                            <button className="btn-warning" onClick={() => deshabilitarEvento(evento._id)}>
+                              ⏸️
+                            </button>
+                            <button className="btn-eliminar" onClick={() => eliminarEvento(evento._id)}>
+                              🗑️
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
-
             </div>
           )}
           {seccionActiva === "tareas" && (
             <div className="seccion-usuarios">
               <div className="seccion-header">
                 <h2>Gestión de Tareas</h2>
-                <button className="btn-primary" onClick={abrirModalCrear}>
-                  ➕ Nuevo Tarea
+                <button className="btn-primary" onClick={abrirModalCrearTarea}>
+                  ➕ Nueva Tarea
                 </button>
               </div>
 
@@ -777,18 +1070,64 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
                 <table className="tabla-usuarios">
                   <thead>
                     <tr>
-                      <th>Nombre</th>
+                      <th>ID</th>
+                      <th>Título</th>
                       <th>Descripción</th>
-                      <th>Categoría</th>
+                      <th>Estado</th>
+                      <th>Prioridad</th>
+                      <th>Asignado A</th>
+                      <th>Asignado Por</th>
+                      <th>Fecha Límite</th>
+                      <th>Fecha Creación</th>
                       <th>Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
-
+                    {tareas.map((tarea) => (
+                      <tr key={tarea._id}>
+                        <td>{tarea._id}</td>
+                        <td>{tarea.titulo}</td>
+                        <td>{tarea.descripcion?.substring(0, 50)}...</td>
+                        <td>
+                          <select
+                            value={tarea.estado}
+                            onChange={(e) => cambiarEstadoTarea(tarea._id, e.target.value)}
+                            className={`badge-estado estado-${tarea.estado?.replace(' ', '-')}`}
+                          >
+                            <option value="pendiente">Pendiente</option>
+                            <option value="en progreso">En Progreso</option>
+                            <option value="completada">Completada</option>
+                            <option value="cancelada">Cancelada</option>
+                          </select>
+                        </td>
+                        <td>
+                          <span className={`badge-prioridad prioridad-${tarea.prioridad}`}>
+                            {tarea.prioridad?.charAt(0).toUpperCase() + tarea.prioridad?.slice(1)}
+                          </span>
+                        </td>
+                        <td>{tarea.asignadoA?.username || "N/A"}</td>
+                        <td>{tarea.asignadoPor?.username || "N/A"}</td>
+                        <td>
+                          {tarea.fechaLimite ? new Date(tarea.fechaLimite).toLocaleDateString() : "N/A"}
+                        </td>
+                        <td>
+                          {tarea.createdAt ? new Date(tarea.createdAt).toLocaleDateString() : "N/A"}
+                        </td>
+                        <td>
+                          <div className="acciones-botones">
+                            <button className="btn-editar" onClick={() => abrirModalEditarTarea(tarea)}>
+                              ✏️
+                            </button>
+                            <button className="btn-eliminar" onClick={() => eliminarTarea(tarea._id)}>
+                              🗑️
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
-
             </div>
           )}
         </main>
@@ -1073,8 +1412,304 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
         </div>
       )}
 
-    </div>
+      {/* Modal para Eventos */}
+      {mostrarModal && seccionActiva === "eventos" && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <div className="modal-header">
+              <h3>{modoEdicionEvento ? "Editar Evento" : "Crear Nuevo Evento"}</h3>
+              <button className="modal-cerrar" onClick={() => setMostrarModal(false)}>
+                ✕
+              </button>
+            </div>
+            <div className="modal-body">
+              <div className="form-grupo">
+                <label>Nombre del Evento:</label>
+                <input
+                  type="text"
+                  value={modoEdicionEvento ? eventoSeleccionado?.name : nuevoEvento.name}
+                  onChange={e =>
+                    modoEdicionEvento
+                      ? setEventoSeleccionado({ ...eventoSeleccionado, name: e.target.value })
+                      : setNuevoEvento({ ...nuevoEvento, name: e.target.value })
+                  }
+                  placeholder="Nombre del evento"
+                  required
+                />
+              </div>
+              <div className="form-grupo">
+                <label>Descripción:</label>
+                <textarea
+                  value={modoEdicionEvento ? eventoSeleccionado?.description : nuevoEvento.description}
+                  onChange={e =>
+                    modoEdicionEvento
+                      ? setEventoSeleccionado({ ...eventoSeleccionado, description: e.target.value })
+                      : setNuevoEvento({ ...nuevoEvento, description: e.target.value })
+                  }
+                  placeholder="Descripción del evento"
+                  rows="3"
+                  required
+                />
+              </div>
+              <div className="form-grupo">
+                <label>Precio:</label>
+                <input
+                  type="number"
+                  value={modoEdicionEvento ? eventoSeleccionado?.price : nuevoEvento.price}
+                  onChange={e =>
+                    modoEdicionEvento
+                      ? setEventoSeleccionado({ ...eventoSeleccionado, price: Number(e.target.value) })
+                      : setNuevoEvento({ ...nuevoEvento, price: Number(e.target.value) })
+                  }
+                  placeholder="Precio"
+                  min="0"
+                  required
+                />
+              </div>
+              <div className="form-grupo">
+                <label>Categoría (ID):</label>
+                <input
+                  type="text"
+                  value={modoEdicionEvento ? eventoSeleccionado?.categoria : nuevoEvento.categoria}
+                  onChange={e =>
+                    modoEdicionEvento
+                      ? setEventoSeleccionado({ ...eventoSeleccionado, categoria: e.target.value })
+                      : setNuevoEvento({ ...nuevoEvento, categoria: e.target.value })
+                  }
+                  placeholder="ID de la categoría"
+                  required
+                />
+              </div>
+              <div className="form-grupo">
+                <label>SubCategoría:</label>
+                <input
+                  type="text"
+                  value={modoEdicionEvento ? eventoSeleccionado?.subCategoria : nuevoEvento.subCategoria}
+                  onChange={e =>
+                    modoEdicionEvento
+                      ? setEventoSeleccionado({ ...eventoSeleccionado, subCategoria: e.target.value })
+                      : setNuevoEvento({ ...nuevoEvento, subCategoria: e.target.value })
+                  }
+                  placeholder="SubCategoría"
+                />
+              </div>
+              <div className="form-grupo">
+                <label>Etiquetas (separadas por coma):</label>
+                <input
+                  type="text"
+                  value={modoEdicionEvento ? 
+                    (eventoSeleccionado?.etiquetas || []).join(", ") : 
+                    (nuevoEvento.etiquetas || []).join(", ")
+                  }
+                  onChange={e => {
+                    const etiquetas = e.target.value.split(",").map(tag => tag.trim()).filter(tag => tag);
+                    modoEdicionEvento
+                      ? setEventoSeleccionado({ ...eventoSeleccionado, etiquetas: etiquetas })
+                      : setNuevoEvento({ ...nuevoEvento, etiquetas: etiquetas });
+                  }}
+                  placeholder="etiqueta1, etiqueta2, etiqueta3"
+                />
+              </div>
+              <div className="form-grupo">
+                <label>URL de Imagen:</label>
+                <input
+                  type="text"
+                  value={modoEdicionEvento ? eventoSeleccionado?.images : nuevoEvento.images}
+                  onChange={e =>
+                    modoEdicionEvento
+                      ? setEventoSeleccionado({ ...eventoSeleccionado, images: e.target.value })
+                      : setNuevoEvento({ ...nuevoEvento, images: e.target.value })
+                  }
+                  placeholder="URL de la imagen"
+                />
+              </div>
+              <div className="form-grupo">
+                <label>Prioridad:</label>
+                <select
+                  value={modoEdicionEvento ? eventoSeleccionado?.prioridad : nuevoEvento.prioridad}
+                  onChange={e =>
+                    modoEdicionEvento
+                      ? setEventoSeleccionado({ ...eventoSeleccionado, prioridad: e.target.value })
+                      : setNuevoEvento({ ...nuevoEvento, prioridad: e.target.value })
+                  }
+                >
+                  <option value="Alta">Alta</option>
+                  <option value="Normal">Normal</option>
+                  <option value="Baja">Baja</option>
+                </select>
+              </div>
+              <div className="form-grupo">
+                <label>Observaciones:</label>
+                <textarea
+                  value={modoEdicionEvento ? eventoSeleccionado?.observaciones : nuevoEvento.observaciones}
+                  onChange={e =>
+                    modoEdicionEvento
+                      ? setEventoSeleccionado({ ...eventoSeleccionado, observaciones: e.target.value })
+                      : setNuevoEvento({ ...nuevoEvento, observaciones: e.target.value })
+                  }
+                  placeholder="Observaciones adicionales"
+                  rows="2"
+                />
+              </div>
+              {modoEdicionEvento && (
+                <div className="form-grupo">
+                  <label>Estado:</label>
+                  <select
+                    value={eventoSeleccionado?.active ? "true" : "false"}
+                    onChange={e => setEventoSeleccionado({ 
+                      ...eventoSeleccionado, 
+                      active: e.target.value === "true" 
+                    })}
+                  >
+                    <option value="true">Activo</option>
+                    <option value="false">Inactivo</option>
+                  </select>
+                </div>
+              )}
+            </div>
+            <div className="modal-footer">
+              <button className="btn-secondary" onClick={() => setMostrarModal(false)}>
+                Cancelar
+              </button>
+              <button
+                className="btn-primary"
+                onClick={modoEdicionEvento ? actualizarEvento : crearEvento}
+              >
+                {modoEdicionEvento ? "Guardar Cambios" : "Crear Evento"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
+      {/* Modal para Tareas */}
+      {mostrarModal && seccionActiva === "tareas" && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <div className="modal-header">
+              <h3>{modoEdicionTarea ? "Editar Tarea" : "Crear Nueva Tarea"}</h3>
+              <button className="modal-cerrar" onClick={() => setMostrarModal(false)}>
+                ✕
+              </button>
+            </div>
+            <div className="modal-body">
+              <div className="form-grupo">
+                <label>Título de la Tarea:</label>
+                <input
+                  type="text"
+                  value={modoEdicionTarea ? tareaSeleccionada?.titulo : nuevaTarea.titulo}
+                  onChange={e =>
+                    modoEdicionTarea
+                      ? setTareaSeleccionada({ ...tareaSeleccionada, titulo: e.target.value })
+                      : setNuevaTarea({ ...nuevaTarea, titulo: e.target.value })
+                  }
+                  placeholder="Título de la tarea"
+                  required
+                />
+              </div>
+              <div className="form-grupo">
+                <label>Descripción:</label>
+                <textarea
+                  value={modoEdicionTarea ? tareaSeleccionada?.descripcion : nuevaTarea.descripcion}
+                  onChange={e =>
+                    modoEdicionTarea
+                      ? setTareaSeleccionada({ ...tareaSeleccionada, descripcion: e.target.value })
+                      : setNuevaTarea({ ...nuevaTarea, descripcion: e.target.value })
+                  }
+                  placeholder="Descripción detallada de la tarea"
+                  rows="3"
+                  required
+                />
+              </div>
+              <div className="form-grupo">
+                <label>Estado:</label>
+                <select
+                  value={modoEdicionTarea ? tareaSeleccionada?.estado : nuevaTarea.estado}
+                  onChange={e =>
+                    modoEdicionTarea
+                      ? setTareaSeleccionada({ ...tareaSeleccionada, estado: e.target.value })
+                      : setNuevaTarea({ ...nuevaTarea, estado: e.target.value })
+                  }
+                >
+                  <option value="pendiente">Pendiente</option>
+                  <option value="en progreso">En Progreso</option>
+                  <option value="completada">Completada</option>
+                  <option value="cancelada">Cancelada</option>
+                </select>
+              </div>
+              <div className="form-grupo">
+                <label>Prioridad:</label>
+                <select
+                  value={modoEdicionTarea ? tareaSeleccionada?.prioridad : nuevaTarea.prioridad}
+                  onChange={e =>
+                    modoEdicionTarea
+                      ? setTareaSeleccionada({ ...tareaSeleccionada, prioridad: e.target.value })
+                      : setNuevaTarea({ ...nuevaTarea, prioridad: e.target.value })
+                  }
+                >
+                  <option value="alta">Alta</option>
+                  <option value="media">Media</option>
+                  <option value="baja">Baja</option>
+                </select>
+              </div>
+              <div className="form-grupo">
+                <label>Asignado A (ID del Usuario):</label>
+                <input
+                  type="text"
+                  value={modoEdicionTarea ? tareaSeleccionada?.asignadoA : nuevaTarea.asignadoA}
+                  onChange={e =>
+                    modoEdicionTarea
+                      ? setTareaSeleccionada({ ...tareaSeleccionada, asignadoA: e.target.value })
+                      : setNuevaTarea({ ...nuevaTarea, asignadoA: e.target.value })
+                  }
+                  placeholder="ID del usuario a quien se asigna"
+                  required
+                />
+              </div>
+              <div className="form-grupo">
+                <label>Asignado Por (ID del Usuario):</label>
+                <input
+                  type="text"
+                  value={modoEdicionTarea ? tareaSeleccionada?.asignadoPor : nuevaTarea.asignadoPor}
+                  onChange={e =>
+                    modoEdicionTarea
+                      ? setTareaSeleccionada({ ...tareaSeleccionada, asignadoPor: e.target.value })
+                      : setNuevaTarea({ ...nuevaTarea, asignadoPor: e.target.value })
+                  }
+                  placeholder="ID del usuario que asigna"
+                  required
+                />
+              </div>
+              <div className="form-grupo">
+                <label>Fecha Límite:</label>
+                <input
+                  type="date"
+                  value={modoEdicionTarea ? tareaSeleccionada?.fechaLimite : nuevaTarea.fechaLimite}
+                  onChange={e =>
+                    modoEdicionTarea
+                      ? setTareaSeleccionada({ ...tareaSeleccionada, fechaLimite: e.target.value })
+                      : setNuevaTarea({ ...nuevaTarea, fechaLimite: e.target.value })
+                  }
+                  required
+                />
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn-secondary" onClick={() => setMostrarModal(false)}>
+                Cancelar
+              </button>
+              <button
+                className="btn-primary"
+                onClick={modoEdicionTarea ? actualizarTarea : crearTarea}
+              >
+                {modoEdicionTarea ? "Guardar Cambios" : "Crear Tarea"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+    </div>
   )
 }
 export default Dashboard

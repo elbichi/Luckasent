@@ -1,35 +1,27 @@
-// models/CategoriaSolicitud.js
+// models/Categorizacion.js
 const mongoose = require('mongoose');
 
-const categoriaSolicitudSchema = new mongoose.Schema({
+const categorizacionSchema = new mongoose.Schema({
   nombre: {
     type: String,
     required: [true, 'El nombre es obligatorio'],
-    trim: true
-  },
-  descripcion: {
-    type: String,
-    required: [true, 'La descripción es obligatoria']
+    trim: true,
+    unique: true
   },
   codigo: {
     type: String,
     required: [true, 'El código es obligatorio'],
-    unique: true
+    unique: true,
+    uppercase: true,
+    trim: true
   },
-  precio: {
-    type: Number,
-    required: [true, 'El precio es obligatorio'],
-    min: 0
+  descripcion: {
+    type: String,
+    trim: true
   },
-  lugar: {
-    nombre: {
-      type: String,
-      required: [true, 'El nombre del lugar es obligatorio']
-    },
-    direccion: {
-      type: String,
-      required: [true, 'La dirección del lugar es obligatoria']
-    }
+  activo: {
+    type: Boolean,
+    default: true
   },
   creadoPor: {
     type: mongoose.Schema.Types.ObjectId,
@@ -39,4 +31,4 @@ const categoriaSolicitudSchema = new mongoose.Schema({
   timestamps: true // Crea automáticamente createdAt y updatedAt
 });
 
-module.exports = mongoose.model('Categorizacion', categoriaSolicitudSchema);
+module.exports = mongoose.model('Categorizacion', categorizacionSchema);

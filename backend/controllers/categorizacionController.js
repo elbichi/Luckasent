@@ -1,14 +1,14 @@
-// controllers/categoriaSolicitudController.js
-const CategoriaSolicitud = require('../models/categorizacion');
+// controllers/categorizacionController.js
+const Categorizacion = require('../models/categorizacion');
 const Solicitud = require('../models/Solicitud');
 
 // CREAR nueva categoría
 const crearCategoria = async (req, res) => {
   try {
-    const { nombre, descripcion, codigo, precio, lugar } = req.body; // Añadir precio aquí
+    const { nombre, codigo, descripcion } = req.body;
     
     // Verificar si el código ya existe
-    const categoriaExistente = await CategoriaSolicitud.findOne({ codigo });
+    const categoriaExistente = await Categorizacion.findOne({ codigo: codigo.toUpperCase() });
     if (categoriaExistente) {
       return res.status(400).json({
         success: false,
@@ -16,12 +16,19 @@ const crearCategoria = async (req, res) => {
       });
     }
 
-    const nuevaCategoria = new CategoriaSolicitud({
+    // Verificar si el nombre ya existe
+    const nombreExistente = await Categorizacion.findOne({ nombre });
+    if (nombreExistente) {
+      return res.status(400).json({
+        success: false,
+        message: 'Ya existe una categoría con ese nombre'
+      });
+    }
+
+    const nuevaCategoria = new Categorizacion({
       nombre,
+      codigo: codigo.toUpperCase(),
       descripcion,
-      codigo,
-      precio,  // Añadir precio aquí
-      lugar,
       creadoPor: req.userId
     });
 
@@ -53,9 +60,9 @@ const obtenerCategorias = async (req, res) => {
       filtro.activo = activo === 'true';
     }
 
-    const categorias = await CategoriaSolicitud.find(filtro)
+    const categorias = await Categorizacion.find(filtro)
       .populate('creadoPor', 'nombre email')
-      .sort({ prioridad: 1, nombre: 1 });
+      .sort({ nombre: 1 });
 
     res.json({
       success: true,
@@ -75,7 +82,7 @@ const obtenerCategorias = async (req, res) => {
 // OBTENER categoría por ID
 const obtenerCategoriaPorId = async (req, res) => {
   try {
-    const categoria = await CategoriaSolicitud.findById(req.params.id)
+    const categoria = await Categorizacion.findById(req.params.id)
       .populate('creadoPor', 'nombre email');
 
     if (!categoria) {
@@ -102,12 +109,12 @@ const obtenerCategoriaPorId = async (req, res) => {
 // ACTUALIZAR categoría
 const actualizarCategoria = async (req, res) => {
   try {
-    const { nombre, descripcion, codigo, color, prioridad, activo } = req.body;
+    const { nombre, descripcion, codigo, activo } = req.body;
 
     // Si se está cambiando el código, verificar que no exista
     if (codigo) {
-      const categoriaExistente = await CategoriaSolicitud.findOne({
-        codigo,
+      const categoriaExistente = await Categorizacion.findOne({
+        codigo: codigo.toUpperCase(),
         _id: { $ne: req.params.id }
       });
       
@@ -119,9 +126,29 @@ const actualizarCategoria = async (req, res) => {
       }
     }
 
-    const categoriaActualizada = await CategoriaSolicitud.findByIdAndUpdate(
+    // Si se está cambiando el nombre, verificar que no exista
+    if (nombre) {
+      const nombreExistente = await Categorizacion.findOne({
+        nombre,
+        _id: { $ne: req.params.id }
+      });
+      
+      if (nombreExistente) {
+        return res.status(400).json({
+          success: false,
+          message: 'Ya existe una categoría con ese nombre'
+        });
+      }
+    }
+
+    const datosActualizacion = { nombre, descripcion, activo };
+    if (codigo) {
+      datosActualizacion.codigo = codigo.toUpperCase();
+    }
+
+    const categoriaActualizada = await Categorizacion.findByIdAndUpdate(
       req.params.id,
-      { nombre, descripcion, codigo, color, prioridad, activo },
+      datosActualizacion,
       { new: true, runValidators: true }
     );
 
@@ -162,7 +189,7 @@ const eliminarCategoria = async (req, res) => {
       });
     }
 
-    const categoriaEliminada = await CategoriaSolicitud.findByIdAndDelete(req.params.id);
+    const categoriaEliminada = await Categorizacion.findByIdAndDelete(req.params.id);
 
     if (!categoriaEliminada) {
       return res.status(404).json({
@@ -191,7 +218,7 @@ const categorizarSolicitud = async (req, res) => {
     const solicitudId = req.params.id;
 
     // Verificar que la categoría existe
-    const categoria = await CategoriaSolicitud.findById(categoriaId);
+    const categoria = await Categorizacion.findById(categoriaId);
     if (!categoria) {
       return res.status(404).json({
         success: false,
