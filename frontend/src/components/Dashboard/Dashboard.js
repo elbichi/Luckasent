@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import { userService } from "../../services/userService";
-import { eventService } from "../../services/eventService";
+import { inscripcionService } from "../../services/inscripcionService";
+import { solicitudService } from "../../services/solicirudService";
 import "./Dashboard.css"
 
 const Dashboard = ({ usuario, onCerrarSesion }) => {
@@ -12,18 +13,12 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
   const [modoEdicion, setModoEdicion] = useState(false);
   const [sidebarAbierto, setSidebarAbierto] = useState(true);
   const [seccionActiva, setSeccionActiva] = useState("dashboard");
-  const [eventos, setEventos] = useState([]);
-  const [categorias, setCategorias] = useState([]);
-  const [eventoSeleccionado, setEventoSeleccionado] = useState(null);
-  const [mostrarModalCategoria, setMostrarModalCategoria] = useState(false);
-  const [categoriaSeleccionada, setCategoriaSeleccionada] = useState("");
   const [estadisticas, setEstadisticas] = useState({
     totalUsuarios: 0,
     usuariosActivos: 0,
     administradores: 0,
     nuevosHoy: 0,
   });
-
   const [nuevoUsuario, setNuevoUsuario] = useState({
     username: "",
     lasname: "",
@@ -32,7 +27,33 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
     password: "",
     role: "participante",
   });
+  //---------------------------------------------------------------------------------------------------------------
+  const [solicitudes, setSolicitudes] = useState([]);
+  const [nuevaSolicitud, setNuevaSolicitud] = useState({
+    solicitante: "",
+    email: "",
+    telefono: "",
+    tipoSolicitud: "",
+    categoria: "",
+    descripcion: "",
+    prioridad: "Media",
+    responsable: "",
+    observaciones: ""
+  });
+  const [modoEdicionSolicitud, setModoEdicionSolicitud] = useState(false);
+  const [solicitudSeleccionada, setSolicitudSeleccionada] = useState(null);
+  /*------------------------------------------------------------------------------------------------*/
 
+  const [inscripciones, setInscripciones] = useState([]);
+  const [nuevaInscripcion, setNuevaInscripcion] = useState({
+    usuario: "",
+    evento: "",
+    categoria: "",
+    observaciones: ""
+  });
+  const [modoEdicionInscripcion, setModoEdicionInscripcion] = useState(false);
+  const [inscripcionSeleccionada, setInscripcionSeleccionada] = useState(null);
+  //----------------------------------------------------------------------------------------------------------
   // Obtener usuarios
   const obtenerUsuarios = async () => {
     try {
@@ -109,6 +130,12 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
       alert(`Error: ${error.message}`);
     }
   };
+  //para cerrar la sesion 
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("usuario");
+    window.location.href = "/login";
+  };
 
   // Abrir modal para crear usuario
   const abrirModalCrear = () => {
@@ -138,71 +165,171 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
         user.role?.toLowerCase().includes(busqueda.toLowerCase())
     )
     : [];
-
-  const obtenerEventos = async () => {
+  /*-----------------------------------------------------------------------------------------------------------*/
+  // Obtener solicitudes
+  const obtenerSolicitudes = async () => {
     try {
-      const data = await eventService.getAllEvents();
-      setEventos(Array.isArray(data.data) ? data.data : []);
+      const data = await solicitudService.getAll();
+      console.log("Respuesta solicitudes:", data);
+      setSolicitudes(Array.isArray(data.data) ? data.data : []);
     } catch (error) {
-      alert("Error al obtener eventos");
+      alert("Error al obtener solicitudes");
     }
   };
 
-  // Función para obtener categorías
-  const obtenerCategorias = async () => {
+  // Crear solicitud
+  const crearSolicitud = async () => {
     try {
-      const res = await fetch("/api/categorizacion", {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+      await solicitudService.create(nuevaSolicitud);
+      alert("Solicitud creada exitosamente");
+      setMostrarModal(false);
+      setNuevaSolicitud({
+        solicitante: "",
+        email: "",
+        telefono: "",
+        tipoSolicitud: "",
+        categoria: "",
+        descripcion: "",
+        prioridad: "Media",
+        responsable: "",
+        observaciones: ""
       });
-      const data = await res.json();
-      if (data.success) setCategorias(data.data);
+      obtenerSolicitudes();
     } catch (error) {
-      alert("Error al obtener categorías");
+      alert(`Error al crear la solicitud: ${error.message}`);
     }
   };
 
-  // Abrir modal para categorizar evento
-  const abrirModalCategorizar = (evento) => {
-    setEventoSeleccionado(evento);
-    setCategoriaSeleccionada(evento.categoria?._id || "");
-    setMostrarModalCategoria(true);
-  };
-
-  // Categorizar evento
-  const categorizarEvento = async () => {
-    if (!categoriaSeleccionada) {
-      alert("Selecciona una categoría");
-      return;
-    }
+  // Actualizar solicitud
+  const actualizarSolicitud = async () => {
     try {
-      const res = await fetch(`/api/eventos/${eventoSeleccionado._id}/categorizar`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`
-        },
-        body: JSON.stringify({ categoria: categoriaSeleccionada })
-      });
-      const data = await res.json();
-      if (data.success) {
-        alert("Evento categorizado correctamente");
-        setMostrarModalCategoria(false);
-        obtenerEventos();
-      } else {
-        alert(data.message || "Error al categorizar evento");
-      }
+      await solicitudService.update(solicitudSeleccionada._id, solicitudSeleccionada);
+      alert("Solicitud actualizada exitosamente");
+      setMostrarModal(false);
+      setSolicitudSeleccionada(null);
+      setModoEdicionSolicitud(false);
+      obtenerSolicitudes();
     } catch (error) {
-      alert("Error al categorizar evento");
+      alert(`Error: ${error.message}`);
     }
   };
 
-  // Llama a obtenerEventos y obtenerCategorias cuando se activa la sección de eventos
+  // Eliminar solicitud
+  const eliminarSolicitud = async (id) => {
+    if (!window.confirm("¿Estás seguro de que quieres eliminar esta solicitud?")) return;
+    try {
+      await solicitudService.delete(id);
+      alert("Solicitud eliminada exitosamente");
+      obtenerSolicitudes();
+    } catch (error) {
+      alert(`Error: ${error.message}`);
+    }
+  };
+
+  // Abrir modal para crear solicitud
+  const abrirModalCrearSolicitud = () => {
+    setModoEdicionSolicitud(false);
+    setNuevaSolicitud({
+      solicitante: "",
+      email: "",
+      telefono: "",
+      tipoSolicitud: "",
+      categoria: "",
+      descripcion: "",
+      prioridad: "Media",
+      responsable: "",
+      observaciones: ""
+    });
+    setMostrarModal(true);
+  };
+
+  // Abrir modal para editar solicitud
+  const abrirModalEditarSolicitud = (solicitud) => {
+    setModoEdicionSolicitud(true);
+    setSolicitudSeleccionada({ ...solicitud });
+    setMostrarModal(true);
+  };
+
+  // Llama a obtenerSolicitudes cuando se activa la sección de solicitudes
   useEffect(() => {
-    if (seccionActiva === "eventos") {
-      obtenerEventos();
-      obtenerCategorias();
+    if (seccionActiva === "solicitudes") {
+      obtenerSolicitudes();
     }
   }, [seccionActiva]);
+
+
+  //-----------------------------------------------------------------------------------------------------------
+
+  // Obtener inscripciones
+  const obtenerInscripciones = async () => {
+    try {
+      const data = await inscripcionService.getAll();
+      setInscripciones(Array.isArray(data.data) ? data.data : []);
+    } catch (error) {
+      alert("Error al obtener inscripciones");
+    }
+  };
+
+  // Crear inscripción
+  const crearInscripcion = async () => {
+    try {
+      await inscripcionService.create(nuevaInscripcion);
+      alert("Inscripción creada exitosamente");
+      setMostrarModal(false);
+      setNuevaInscripcion({ usuario: "", evento: "", categoria: "", observaciones: "" });
+      obtenerInscripciones();
+    } catch (error) {
+      alert(`Error al crear la inscripción: ${error.message}`);
+    }
+  };
+
+  // Actualizar inscripción
+  const actualizarInscripcion = async () => {
+    try {
+      await inscripcionService.update(inscripcionSeleccionada._id, inscripcionSeleccionada);
+      alert("Inscripción actualizada exitosamente");
+      setMostrarModal(false);
+      setInscripcionSeleccionada(null);
+      setModoEdicionInscripcion(false);
+      obtenerInscripciones();
+    } catch (error) {
+      alert(`Error: ${error.message}`);
+    }
+  };
+
+  // Eliminar inscripción
+  const eliminarInscripcion = async (id) => {
+    if (!window.confirm("¿Estás seguro de que quieres eliminar esta inscripción?")) return;
+    try {
+      await inscripcionService.delete(id);
+      alert("Inscripción eliminada exitosamente");
+      obtenerInscripciones();
+    } catch (error) {
+      alert(`Error: ${error.message}`);
+    }
+  };
+
+  // Abrir modal para crear inscripción
+  const abrirModalCrearInscripcion = () => {
+    setModoEdicionInscripcion(false);
+    setNuevaInscripcion({ usuario: "", evento: "", categoria: "", observaciones: "" });
+    setMostrarModal(true);
+  };
+
+  // Abrir modal para editar inscripción
+  const abrirModalEditarInscripcion = (inscripcion) => {
+    setModoEdicionInscripcion(true);
+    setInscripcionSeleccionada({ ...inscripcion });
+    setMostrarModal(true);
+  };
+
+  useEffect(() => {
+    if (seccionActiva === "inscripciones") {
+      obtenerInscripciones();
+    }
+  }, [seccionActiva]);
+
+
   if (cargando) {
     return (
       <div className="cargando-contenedor">
@@ -311,13 +438,15 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
             <div className="notificaciones">
               <span className="notif-icon">🔔</span>
               <span className="notif-badge">3</span>
+
             </div>
             <div className="usuario-info">
               <div className="usuario-avatar">{usuario?.username?.substring(0, 2).toUpperCase()}</div>
               <span className="usuario-nombre">{usuario?.username}</span>
-              <button className="btn-logout" onClick={onCerrarSesion}>
-                🚪
+              <button className="btn-logout" onClick={handleLogout}>
+                Cerrar sesión
               </button>
+
             </div>
           </div>
         </header>
@@ -467,31 +596,71 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
               <p>Próximamente: Configuraciones del sistema</p>
             </div>
           )}
-           {seccionActiva === "solicitudes" && (
+          {seccionActiva === "solicitudes" && (
             <div className="seccion-usuarios">
               <div className="seccion-header">
                 <h2>Gestión de Solicitudes</h2>
-                <button className="btn-primary" onClick={abrirModalCrear}>
-                    ➕ Nuevo Solicitud
-                  </button>
+                <button className="btn-primary" onClick={abrirModalCrearSolicitud}>
+                  ➕ Nuevo Solicitud
+                </button>
               </div>
-             
               <div className="tabla-contenedor">
                 <table className="tabla-usuarios">
                   <thead>
                     <tr>
-                      <th>Nombre</th>
-                      <th>Descripción</th>
+                      <th>Solicitante</th>
+                      <th>Correo</th>
+                      <th>Teléfono</th>
+                      <th>Tipo de Solicitud</th>
                       <th>Categoría</th>
+                      <th>Descripción</th>
+                      <th>Estado</th>
+                      <th>Prioridad</th>
+                      <th>Observaciones</th>
+                      <th>Fecha Solicitud</th>
+                      <th>Responsable</th>
+                      <th>Modificado Por</th>
                       <th>Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
-                    
+                    {solicitudes.map((sol) => (
+                      <tr key={sol._id}>
+                        <td>
+
+                          {sol.solicitante?.username || sol.solicitante || "N/A"}
+
+                        </td>
+                        <td>
+                          {/* Si solicitante es objeto, muestra el email, si no, el campo email */}
+                          {sol.solicitante?.email || sol.email || "N/A"}
+                        </td>
+                        <td>{sol.telefono || "N/A"}</td>
+                        <td>{sol.tipoSolicitud || "N/A"}</td>
+                        <td>
+                          {/* Si categoria es objeto, muestra el nombre, si no, el valor */}
+                          {sol.categoria?.nombre || sol.categoria || "N/A"}
+                        </td>
+                        <td>{sol.descripcion || "N/A"}</td>
+                        <td>{sol.estado || "N/A"}</td>
+                        <td>{sol.prioridad || "N/A"}</td>
+                        <td>{sol.observaciones || "N/A"}</td>
+                        <td>{sol.fechaSolicitud ? new Date(sol.fechaSolicitud).toLocaleDateString() : "N/A"}</td>
+                        <td>
+                          {/* Si responsable es objeto, muestra el nombre, si no, el valor */}
+                          {sol.responsable?.username || sol.responsable || "N/A"}
+
+                        </td>
+                        <td>{sol.modificadoPor || "N/A"}</td>
+                        <td>
+                          <button className="btn-editar" onClick={() => abrirModalEditarSolicitud(sol)}>✏️</button>
+                          <button className="btn-eliminar" onClick={() => eliminarSolicitud(sol._id)}>🗑️</button>
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
-
             </div>
           )}
           {seccionActiva === "actividades" && (
@@ -499,10 +668,10 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
               <div className="seccion-header">
                 <h2>Gestión de Actividades</h2>
                 <button className="btn-primary" onClick={abrirModalCrear}>
-                    ➕ Nuevo Actividad
-                  </button>
+                  ➕ Nuevo Actividad
+                </button>
               </div>
-             
+
               <div className="tabla-contenedor">
                 <table className="tabla-usuarios">
                   <thead>
@@ -514,7 +683,7 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
                     </tr>
                   </thead>
                   <tbody>
-                    
+
                   </tbody>
                 </table>
               </div>
@@ -525,27 +694,47 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
             <div className="seccion-usuarios">
               <div className="seccion-header">
                 <h2>Gestión de Inscripciones</h2>
-                <button className="btn-primary" onClick={abrirModalCrear}>
-                    ➕ Nuevo Inscripcion
-                  </button>
+                <button className="btn-primary" onClick={abrirModalCrearInscripcion}>
+                  ➕ Nueva Inscripción
+                </button>
               </div>
-             
               <div className="tabla-contenedor">
                 <table className="tabla-usuarios">
                   <thead>
                     <tr>
+                      <th>ID Inscripción</th>
                       <th>Nombre</th>
-                      <th>Descripción</th>
+                      <th>Email</th>
+                      <th>Evento</th>
                       <th>Categoría</th>
+                      <th>Estado</th>
+                      <th>Observaciones</th>
+                      <th>Fecha Inscripción</th>
+                      <th>Solicitud</th>
                       <th>Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
-                    
+                    {inscripciones.map((ins) => (
+                      <tr key={ins._id}>
+                        <td>{ins._id}</td>
+                        <td>{ins.usuario?.username || "N/A"}</td>
+                        <td>{ins.usuario?.email || "N/A"}</td>
+                        <td>{ins.evento?.nombre || "N/A"}</td>
+                        <td>{ins.categoria?.nombre || "N/A"}</td>
+                        <td>{ins.estado || "N/A"}</td>
+                        <td>{ins.observaciones || ""}</td>
+                        <td>{ins.createdAt ? new Date(ins.createdAt).toLocaleDateString() : ""}</td>
+                        <td>{ins.solicitud?._id || ins.solicitud || ""}</td>
+                        <td>
+                          <button className="btn-editar" onClick={() => abrirModalEditarInscripcion(ins)}>✏️</button>
+                          <button className="btn-eliminar" onClick={() => eliminarInscripcion(ins._id)}>🗑️</button>
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
-
             </div>
           )}
           {seccionActiva === "eventos" && (
@@ -553,10 +742,10 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
               <div className="seccion-header">
                 <h2>Gestión de Eventos</h2>
                 <button className="btn-primary" onClick={abrirModalCrear}>
-                    ➕ Nuevo Evento
-                  </button>
+                  ➕ Nuevo Evento
+                </button>
               </div>
-             
+
               <div className="tabla-contenedor">
                 <table className="tabla-usuarios">
                   <thead>
@@ -568,7 +757,7 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
                     </tr>
                   </thead>
                   <tbody>
-                    
+
                   </tbody>
                 </table>
               </div>
@@ -580,10 +769,10 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
               <div className="seccion-header">
                 <h2>Gestión de Tareas</h2>
                 <button className="btn-primary" onClick={abrirModalCrear}>
-                    ➕ Nuevo Tarea
-                  </button>
+                  ➕ Nuevo Tarea
+                </button>
               </div>
-             
+
               <div className="tabla-contenedor">
                 <table className="tabla-usuarios">
                   <thead>
@@ -595,7 +784,7 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
                     </tr>
                   </thead>
                   <tbody>
-                    
+
                   </tbody>
                 </table>
               </div>
@@ -682,7 +871,7 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
                       ? setUsuarioSeleccionado({ ...usuarioSeleccionado, password: e.target.value })
                       : setNuevoUsuario({ ...nuevoUsuario, password: e.target.value })
                   }
-                
+
                   placeholder="Contraseña"
                   required
                 />
@@ -733,31 +922,151 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
 
       )}
 
-      {mostrarModalCategoria && (
+      {mostrarModal && seccionActiva === "solicitudes" && (
         <div className="modal-overlay">
           <div className="modal">
             <div className="modal-header">
-              <h3>Categorizar Evento</h3>
-              <button className="modal-cerrar" onClick={() => setMostrarModalCategoria(false)}>✕</button>
+              <h3>{modoEdicionSolicitud ? "Editar Solicitud" : "Crear Nueva Solicitud"}</h3>
+              <button className="modal-cerrar" onClick={() => setMostrarModal(false)}>
+                ✕
+              </button>
             </div>
             <div className="modal-body">
-              <label>Selecciona una categoría:</label>
-              <select
-                value={categoriaSeleccionada}
-                onChange={e => setCategoriaSeleccionada(e.target.value)}
-              >
-                <option value="">-- Selecciona --</option>
-                {categorias.map(cat => (
-                  <option key={cat._id} value={cat._id}>{cat.nombre}</option>
-                ))}
-              </select>
+              <div className="form-grupo">
+                <label>Solicitante:</label>
+                <input
+                  type="text"
+                  value={modoEdicionSolicitud ? solicitudSeleccionada?.solicitante : nuevaSolicitud.solicitante}
+                  onChange={e =>
+                    modoEdicionSolicitud
+                      ? setSolicitudSeleccionada({ ...solicitudSeleccionada, solicitante: e.target.value })
+                      : setNuevaSolicitud({ ...nuevaSolicitud, solicitante: e.target.value })
+                  }
+                  placeholder="Nombre del solicitante"
+                  required
+                />
+              </div>
+              <div className="form-grupo">
+                <label>Email:</label>
+                <input
+                  type="email"
+                  value={modoEdicionSolicitud ? solicitudSeleccionada?.email : nuevaSolicitud.email}
+                  onChange={e =>
+                    modoEdicionSolicitud
+                      ? setSolicitudSeleccionada({ ...solicitudSeleccionada, email: e.target.value })
+                      : setNuevaSolicitud({ ...nuevaSolicitud, email: e.target.value })
+                  }
+                  placeholder="correo@ejemplo.com"
+                  required
+                />
+              </div>
+              <div className="form-grupo">
+                <label>Teléfono:</label>
+                <input
+                  type="text"
+                  value={modoEdicionSolicitud ? solicitudSeleccionada?.telefono : nuevaSolicitud.telefono}
+                  onChange={e =>
+                    modoEdicionSolicitud
+                      ? setSolicitudSeleccionada({ ...solicitudSeleccionada, telefono: e.target.value })
+                      : setNuevaSolicitud({ ...nuevaSolicitud, telefono: e.target.value })
+                  }
+                  placeholder="Teléfono"
+                  required
+                />
+              </div>
+              <div className="form-grupo">
+                <label>Tipo de Solicitud:</label>
+                <input
+                  type="text"
+                  value={modoEdicionSolicitud ? solicitudSeleccionada?.tipoSolicitud : nuevaSolicitud.tipoSolicitud}
+                  onChange={e =>
+                    modoEdicionSolicitud
+                      ? setSolicitudSeleccionada({ ...solicitudSeleccionada, tipoSolicitud: e.target.value })
+                      : setNuevaSolicitud({ ...nuevaSolicitud, tipoSolicitud: e.target.value })
+                  }
+                  placeholder="Tipo"
+                  required
+                />
+              </div>
+              <div className="form-grupo">
+                <label>Categoría:</label>
+                <input
+                  type="text"
+                  value={modoEdicionSolicitud ? solicitudSeleccionada?.categoria : nuevaSolicitud.categoria}
+                  onChange={e =>
+                    modoEdicionSolicitud
+                      ? setSolicitudSeleccionada({ ...solicitudSeleccionada, categoria: e.target.value })
+                      : setNuevaSolicitud({ ...nuevaSolicitud, categoria: e.target.value })
+                  }
+                  placeholder="Categoría"
+                  required
+                />
+              </div>
+              <div className="form-grupo">
+                <label>Descripción:</label>
+                <input
+                  type="text"
+                  value={modoEdicionSolicitud ? solicitudSeleccionada?.descripcion : nuevaSolicitud.descripcion}
+                  onChange={e =>
+                    modoEdicionSolicitud
+                      ? setSolicitudSeleccionada({ ...solicitudSeleccionada, descripcion: e.target.value })
+                      : setNuevaSolicitud({ ...nuevaSolicitud, descripcion: e.target.value })
+                  }
+                  placeholder="Descripción"
+                  required
+                />
+              </div>
+              <div className="form-grupo">
+                <label>Prioridad:</label>
+                <select
+                  value={modoEdicionSolicitud ? solicitudSeleccionada?.prioridad : nuevaSolicitud.prioridad}
+                  onChange={e =>
+                    modoEdicionSolicitud
+                      ? setSolicitudSeleccionada({ ...solicitudSeleccionada, prioridad: e.target.value })
+                      : setNuevaSolicitud({ ...nuevaSolicitud, prioridad: e.target.value })
+                  }
+                >
+                  <option value="Alta">Alta</option>
+                  <option value="Media">Media</option>
+                  <option value="Baja">Baja</option>
+                </select>
+              </div>
+              <div className="form-grupo">
+                <label>Responsable:</label>
+                <input
+                  type="text"
+                  value={modoEdicionSolicitud ? solicitudSeleccionada?.responsable : nuevaSolicitud.responsable}
+                  onChange={e =>
+                    modoEdicionSolicitud
+                      ? setSolicitudSeleccionada({ ...solicitudSeleccionada, responsable: e.target.value })
+                      : setNuevaSolicitud({ ...nuevaSolicitud, responsable: e.target.value })
+                  }
+                  placeholder="Responsable"
+                />
+              </div>
+              <div className="form-grupo">
+                <label>Observaciones:</label>
+                <input
+                  type="text"
+                  value={modoEdicionSolicitud ? solicitudSeleccionada?.observaciones : nuevaSolicitud.observaciones}
+                  onChange={e =>
+                    modoEdicionSolicitud
+                      ? setSolicitudSeleccionada({ ...solicitudSeleccionada, observaciones: e.target.value })
+                      : setNuevaSolicitud({ ...nuevaSolicitud, observaciones: e.target.value })
+                  }
+                  placeholder="Observaciones"
+                />
+              </div>
             </div>
             <div className="modal-footer">
-              <button className="btn-secondary" onClick={() => setMostrarModalCategoria(false)}>
+              <button className="btn-secondary" onClick={() => setMostrarModal(false)}>
                 Cancelar
               </button>
-              <button className="btn-primary" onClick={categorizarEvento}>
-                Guardar
+              <button
+                className="btn-primary"
+                onClick={modoEdicionSolicitud ? actualizarSolicitud : crearSolicitud}
+              >
+                {modoEdicionSolicitud ? "Guardar Cambios" : "Crear Solicitud"}
               </button>
             </div>
           </div>

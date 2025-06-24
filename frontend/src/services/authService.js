@@ -11,3 +11,10 @@ export const authService = {
     return response.data;
   },
 };
+
+export const signupService = {
+  signup : async (formData) => {
+    const res = await axios.post(`${API_BASE_URL}/auth/signup`, formData);
+    return res.data;
+  },
+};
