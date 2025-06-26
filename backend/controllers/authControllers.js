@@ -8,9 +8,7 @@ const config = require('../config/auth.config');
 const ROLES ={
     ADMIN: 'admin',
     TESORERO: 'tesorero',
-    PARTICIPANTE: 'participante',
     SEMINARISTA: 'seminarista',
-    LOGISTICO: 'logistico',
     EXTERNO: 'externo'
 };
 

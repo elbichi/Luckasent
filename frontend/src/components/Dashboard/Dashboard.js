@@ -4,9 +4,21 @@ import { inscripcionService } from "../../services/inscripcionService";
 import { solicitudService } from "../../services/solicirudService";
 import { eventService } from "../../services/eventService";
 import { tareaService } from "../../services/tareaService";
+import { categorizacionService } from "../../services/categorizacionService";
+import { cabanaService } from "../../services/cabanaService";
+import { reservaService } from "../../services/reservaService";
+import UsuarioModal from "./UsuarioModal";
+import SolicitudModal from "./SolicitudModal";
+import EventoModal from "./EventoModal";
+import TareaModal from "./TareaModal";
+import InscripcionModal from "./InscripsionModal";
+import CabanaModal from "./CabanaModal";
+import ReservasModal from "./ReservaModal";
+
 import "./Dashboard.css"
 
 const Dashboard = ({ usuario, onCerrarSesion }) => {
+
   const [usuarios, setUsuarios] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [busqueda, setBusqueda] = useState("");
@@ -45,16 +57,35 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
   const [modoEdicionSolicitud, setModoEdicionSolicitud] = useState(false);
   const [solicitudSeleccionada, setSolicitudSeleccionada] = useState(null);
   /*------------------------------------------------------------------------------------------------*/
-
-  const [inscripciones, setInscripciones] = useState([]);
+  const [mostrarModalInscripcion, setMostrarModalInscripcion] = useState(false);
+  const [modoEdicionInscripcion, setModoEdicionInscripcion] = useState(false);
+  const [inscripcionSeleccionada, setInscripcionSeleccionada] = useState(null);
   const [nuevaInscripcion, setNuevaInscripcion] = useState({
     usuario: "",
     evento: "",
     categoria: "",
+    estado: "pendiente",
     observaciones: ""
   });
-  const [modoEdicionInscripcion, setModoEdicionInscripcion] = useState(false);
-  const [inscripcionSeleccionada, setInscripcionSeleccionada] = useState(null);
+  const [inscripciones, setInscripciones] = useState([]);
+  // Función para abrir el modal de inscripción
+  const abrirModalInscripcion = () => {
+    setModoEdicionInscripcion(false);
+    setNuevaInscripcion({
+      usuario: "",
+      evento: "",
+      categoria: "",
+      estado: "pendiente",
+      observaciones: ""
+    });
+    setMostrarModalInscripcion(true);
+  };
+
+  // Función para crear o actualizar inscripción (ajusta según tu lógica)
+  const crearOActualizarInscripcion = () => {
+    // Aquí va tu lógica para crear o actualizar la inscripción
+    setMostrarModalInscripcion(false);
+  };
   //----------------------------------------------------------------------------------------------------------
   // Estados para eventos
   const [eventos, setEventos] = useState([]);
@@ -72,7 +103,6 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
   });
   const [modoEdicionEvento, setModoEdicionEvento] = useState(false);
   const [eventoSeleccionado, setEventoSeleccionado] = useState(null);
-  const [categorias, setCategorias] = useState([]);
   //----------------------------------------------------------------------------------------------------------
   // Estados para tareas
   const [tareas, setTareas] = useState([]);
@@ -347,8 +377,14 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
   // Abrir modal para crear inscripción
   const abrirModalCrearInscripcion = () => {
     setModoEdicionInscripcion(false);
-    setNuevaInscripcion({ usuario: "", evento: "", categoria: "", observaciones: "" });
-    setMostrarModal(true);
+    setNuevaInscripcion({
+      usuario: "",
+      evento: "",
+      categoria: "",
+      estado: "pendiente",
+      observaciones: ""
+    });
+    setMostrarModalInscripcion(true); // <-- CORRECTO
   };
 
   // Abrir modal para editar inscripción
@@ -460,7 +496,7 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
   // Abrir modal para editar evento
   const abrirModalEditarEvento = (evento) => {
     setModoEdicionEvento(true);
-    setEventoSeleccionado({ 
+    setEventoSeleccionado({
       ...evento,
       etiquetas: Array.isArray(evento.etiquetas) ? evento.etiquetas : []
     });
@@ -565,7 +601,7 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
   // Abrir modal para editar tarea
   const abrirModalEditarTarea = (tarea) => {
     setModoEdicionTarea(true);
-    setTareaSeleccionada({ 
+    setTareaSeleccionada({
       ...tarea,
       fechaLimite: tarea.fechaLimite ? new Date(tarea.fechaLimite).toISOString().split('T')[0] : ""
     });
@@ -580,6 +616,216 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
   }, [seccionActiva]);
 
   //-----------------------------------------------------------------------------------------------------------
+  const [categorias, setCategorias] = useState([]);
+
+  // Cargar categorías cuando se activa la sección de categorizacion
+  useEffect(() => {
+    if (seccionActiva === "categorizacion" || seccionActiva === "solicitudes") {
+      const cargarCategorias = async () => {
+        try {
+          const res = await categorizacionService.getAll();
+          setCategorias(res.data || []);
+        } catch (error) {
+          setCategorias([]);
+        }
+      };
+      cargarCategorias();
+    }
+  }, [seccionActiva]);
+
+  //----------------------------------------------------------------------------------------------------------------
+
+  // Estados para cabañas
+  const [cabanas, setCabanas] = useState([]);
+  const [nuevaCabana, setNuevaCabana] = useState({
+    nombre: "",
+    descripcion: "",
+    capacidad: "",
+    categoria: "",
+    estado: "disponible"
+  });
+  const [modoEdicionCabana, setModoEdicionCabana] = useState(false);
+  const [cabanaSeleccionada, setCabanaSeleccionada] = useState(null);
+
+  // Obtener cabañas
+  const obtenerCabanas = async () => {
+    try {
+      const data = await cabanaService.getAll();
+      setCabanas(Array.isArray(data.data) ? data.data : []);
+    } catch (error) {
+      alert("Error al obtener cabañas");
+    }
+  };
+
+  // Crear cabaña
+  const crearCabana = async () => {
+    try {
+      await cabanaService.create(nuevaCabana);
+      alert("Cabaña creada exitosamente");
+      setNuevaCabana({ nombre: "", descripcion: "", capacidad: "", categoria: "", estado: "disponible" });
+      obtenerCabanas();
+      setMostrarModal(false);
+    } catch (error) {
+      alert(`Error al crear la cabaña: ${error.message}`);
+    }
+  };
+
+  // Actualizar cabaña
+  const actualizarCabana = async () => {
+    try {
+      await cabanaService.update(cabanaSeleccionada._id, cabanaSeleccionada);
+      alert("Cabaña actualizada exitosamente");
+      setCabanaSeleccionada(null);
+      setModoEdicionCabana(false);
+      setMostrarModal(false);
+      obtenerCabanas();
+    } catch (error) {
+      alert(`Error al actualizar la cabaña: ${error.message}`);
+    }
+  };
+
+  // Eliminar cabaña
+  const eliminarCabana = async (id) => {
+    if (!window.confirm("¿Estás seguro de que quieres eliminar esta cabaña?")) return;
+    try {
+      await cabanaService.delete(id);
+      alert("Cabaña eliminada exitosamente");
+      obtenerCabanas();
+    } catch (error) {
+      alert(`Error al eliminar la cabaña: ${error.message}`);
+    }
+  };
+
+  // Abrir modal para crear cabaña
+  const abrirModalCrearCabana = () => {
+    setModoEdicionCabana(false);
+    setNuevaCabana({ nombre: "", descripcion: "", capacidad: "", categoria: "", estado: "disponible" });
+    setMostrarModal(true);
+  };
+
+  // Abrir modal para editar cabaña
+  const abrirModalEditarCabana = (cabana) => {
+    setModoEdicionCabana(true);
+    setCabanaSeleccionada({ ...cabana });
+    setMostrarModal(true);
+  };
+
+  // Llama a obtenerCabanas cuando se activa la sección de cabañas
+  useEffect(() => {
+    if (seccionActiva === "cabanas") {
+      obtenerCabanas();
+    }
+  }, [seccionActiva]);
+  //-----------------------------------------------------------------------------------------------------------
+// Estados para reservas
+  const [reservas, setReservas] = useState([]);
+  const [nuevaReserva, setNuevaReserva] = useState({
+    usuario: "",
+    recurso: "",
+    fechaInicio: "",
+    fechaFin: "",
+    categoria: "",
+    observaciones: ""
+  });
+  const [modoEdicionReserva, setModoEdicionReserva] = useState(false);
+  const [reservaSeleccionada, setReservaSeleccionada] = useState(null);
+
+  // Obtener reservas
+  const obtenerReservas = async () => {
+    try {
+      const data = await reservaService.getAll();
+      setReservas(Array.isArray(data.data) ? data.data : []);
+    } catch (error) {
+      alert("Error al obtener reservas");
+    }
+  };
+
+  // Crear reserva
+  const crearReserva = async () => {
+    try {
+      await reservaService.create(nuevaReserva);
+      alert("Reserva creada exitosamente");
+      setNuevaReserva({ usuario: "", recurso: "", fechaInicio: "", fechaFin: "", categoria: "", observaciones: "" });
+      obtenerReservas();
+      setMostrarModal(false);
+    } catch (error) {
+      alert(`Error al crear la reserva: ${error.message}`);
+    }
+  };
+
+  // Actualizar reserva
+  const actualizarReserva = async () => {
+    try {
+      await reservaService.update(reservaSeleccionada._id, reservaSeleccionada);
+      alert("Reserva actualizada exitosamente");
+      setReservaSeleccionada(null);
+      setModoEdicionReserva(false);
+      setMostrarModal(false);
+      obtenerReservas();
+    } catch (error) {
+      alert(`Error al actualizar la reserva: ${error.message}`);
+    }
+  };
+
+  // Eliminar reserva
+  const eliminarReserva = async (id) => {
+    if (!window.confirm("¿Estás seguro de que quieres eliminar esta reserva?")) return;
+    try {
+      await reservaService.delete(id);
+      alert("Reserva eliminada exitosamente");
+      obtenerReservas();
+    } catch (error) {
+      alert(`Error al eliminar la reserva: ${error.message}`);
+    }
+  };
+
+  // Abrir modal para crear reserva
+  const abrirModalCrearReserva = () => {
+    setModoEdicionReserva(false);
+    setNuevaReserva({ usuario: "", recurso: "", fechaInicio: "", fechaFin: "", categoria: "", observaciones: "" });
+    setMostrarModal(true);
+  };
+
+  // Abrir modal para editar reserva
+  const abrirModalEditarReserva = (reserva) => {
+    setModoEdicionReserva(true);
+    setReservaSeleccionada({ ...reserva });
+    setMostrarModal(true);
+  };
+
+  // Llama a obtenerReservas cuando se activa la sección de reservas
+  useEffect(() => {
+    if (seccionActiva === "reservas") {
+      obtenerReservas();
+    }
+  }, [seccionActiva]);
+  //-----------------------------------------------------------------------------------------------------------
+  const [datosUnificados, setDatosUnificados] = useState({
+    solicitudes: [],
+    inscripciones: [],
+    reservas: []
+  });
+
+  useEffect(() => {
+    if (seccionActiva === "solicitudes") {
+      obtenerDatosUnificados();
+    }
+    // eslint-disable-next-line
+  }, [seccionActiva]);
+
+  const obtenerDatosUnificados = async () => {
+    try {
+      const data = await solicitudService.getUnificado();
+      setDatosUnificados({
+        solicitudes: data.data.solicitudes || [],
+        inscripciones: data.data.inscripciones || [],
+        reservas: data.data.reservas || []
+      });
+    } catch (error) {
+      alert("Error al obtener datos unificados");
+    }
+  };
+
   if (cargando) {
     return (
       <div className="cargando-contenedor">
@@ -634,12 +880,7 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
                   <span className="nav-texto">Solicitudes</span>
                 </a>
               </li>
-              <li>
-                <a href="#" onClick={() => setSeccionActiva("actividades")}>
-                  <span className="nav-icon">📋</span>
-                  <span className="nav-texto">Actividades</span>
-                </a>
-              </li>
+            
               <li>
                 <a href="#" onClick={() => setSeccionActiva("inscripciones")}>
                   <span className="nav-icon">📝</span>
@@ -656,6 +897,25 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
                 <a href="#" onClick={() => setSeccionActiva("tareas")}>
                   <span className="nav-icon">✅</span>
                   <span className="nav-texto">Tareas</span>
+                </a>
+              </li>
+              <li>
+                <a href="#" onClick={() => setSeccionActiva("categorizacion")}>
+                  <span className="nav-icon">🗂️</span>
+                  <span className="nav-texto">Categorizacion</span>
+                </a>
+              </li>
+
+              <li>
+                <a href="#" onClick={() => setSeccionActiva("cabanas")}>
+                  <span className="nav-icon">🛖</span>
+                  <span className="nav-texto">Cabañas</span>
+                </a>
+              </li>
+              <li>
+                <a href="#" onClick={() => setSeccionActiva("reservas")}>
+                  <span className="nav-icon">📅</span>
+                  <span className="nav-texto">Reservas</span>
                 </a>
               </li>
               <li>
@@ -913,33 +1173,7 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
               </div>
             </div>
           )}
-          {seccionActiva === "actividades" && (
-            <div className="seccion-usuarios">
-              <div className="seccion-header">
-                <h2>Gestión de Actividades</h2>
-                <button className="btn-primary" onClick={abrirModalCrear}>
-                  ➕ Nuevo Actividad
-                </button>
-              </div>
-
-              <div className="tabla-contenedor">
-                <table className="tabla-usuarios">
-                  <thead>
-                    <tr>
-                      <th>Nombre</th>
-                      <th>Descripción</th>
-                      <th>Categoría</th>
-                      <th>Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-
-                  </tbody>
-                </table>
-              </div>
-
-            </div>
-          )}
+          
           {seccionActiva === "inscripciones" && (
             <div className="seccion-usuarios">
               <div className="seccion-header">
@@ -1057,6 +1291,53 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
               </div>
             </div>
           )}
+          {seccionActiva === "categorizacion" && (
+            <div className="seccion-usuarios">
+              <div className="seccion-header">
+                <h2>Gestión de categorizacion</h2>
+                <button className="btn-primary">
+                  ➕ Nuevo Categoria
+                </button>
+              </div>
+
+              <div className="tabla-contenedor">
+                <table className="tabla-usuarios">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Nombre</th>
+                      <th>Codigo</th>
+                      <th>Descripción</th>
+                      <th>Fecha Creación</th>
+                      <th>Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {categorias.length === 0 ? (
+                      <tr>
+                        <td colSpan="6">No hay categorías registradas</td>
+                      </tr>
+                    ) : (
+                      categorias.map(cat => (
+                        <tr key={cat._id}>
+                          <td>{cat._id}</td>
+                          <td>{cat.nombre}</td>
+                          <td>{cat.codigo}</td>
+                          <td>{cat.descripcion}</td>
+                          <td>{cat.createdAt ? new Date(cat.createdAt).toLocaleDateString() : "N/A"}</td>
+                          <td>
+                            {/* Aquí puedes poner botones de editar/eliminar si lo deseas */}
+                            <button className="btn-editar">✏️</button>
+                            <button className="btn-eliminar">🗑️</button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
           {seccionActiva === "tareas" && (
             <div className="seccion-usuarios">
               <div className="seccion-header">
@@ -1130,585 +1411,186 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
               </div>
             </div>
           )}
+          {seccionActiva === "cabanas" && (
+            <div className="seccion-usuarios">
+              <div className="seccion-header">
+                <h2>Gestión de Cabañas</h2>
+                <button className="btn-primary" onClick={abrirModalCrearTarea}>
+                  ➕ Nueva Cabaña
+                </button>
+              </div>
+
+              <div className="tabla-contenedor">
+                <table className="tabla-usuarios">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Título</th>
+                      <th>Descripción</th>
+                      <th>Estado</th>
+                      <th>Prioridad</th>
+                      <th>Asignado A</th>
+                      <th>Asignado Por</th>
+                      <th>Fecha Límite</th>
+                      <th>Fecha Creación</th>
+                      <th>Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {cabanas.map((cabana) => (
+                      <tr key={cabana._id}>
+                        <td>{cabana._id}</td>
+                        <td>{cabana.nombre}</td>
+                        <td>{cabana.descripcion}</td>
+                        <td>{cabana.capacidad}</td>
+                        <td>{cabana.categoria?.nombre || cabana.categoria || "N/A"}</td>
+                        <td>{cabana.estado}</td>
+                        <td>
+                          <button className="btn-editar" onClick={() => abrirModalEditarCabana(cabana)}>
+                            ✏️
+                          </button>
+                          <button className="btn-eliminar" onClick={() => eliminarCabana(cabana._id)}>
+                            🗑️
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+          {seccionActiva === "reservas" && (
+            <div className="seccion-usuarios">
+              <div className="seccion-header">
+                <h2>Gestión de Reservas</h2>
+                <button className="btn-primary" onClick={abrirModalCrearReserva}>
+                  ➕ Nueva Reserva
+                </button>
+              </div>
+
+              <div className="tabla-contenedor">
+                <table className="tabla-usuarios">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Usuario</th>
+                      <th>Recurso</th>
+                      <th>Fecha Inicio</th>
+                      <th>Fecha Fin</th>
+                      <th>Categoría</th>
+                      <th>Observaciones</th>
+                      <th>Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {reservas.map((reserva) => (
+                      <tr key={reserva._id}>
+                        <td>{reserva._id}</td>
+                        <td>{reserva.usuario?.username || reserva.usuario || "N/A"}</td>
+                        <td>{reserva.recurso?.nombre || reserva.recurso || "N/A"}</td>
+                        <td>{reserva.fechaInicio ? new Date(reserva.fechaInicio).toLocaleDateString() : ""}</td>
+                        <td>{reserva.fechaFin ? new Date(reserva.fechaFin).toLocaleDateString() : ""}</td>
+                        <td>{reserva.categoria?.nombre || reserva.categoria || "N/A"}</td>
+                        <td>{reserva.observaciones}</td>
+                        <td>
+                          <button className="btn-editar" onClick={() => abrirModalEditarReserva(reserva)}>
+                            ✏️
+                          </button>
+                          <button className="btn-eliminar" onClick={() => eliminarReserva(reserva._id)}>
+                            🗑️
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </main>
       </div>
 
-      {/* Modal */}
-      {mostrarModal && (
-        <div className="modal-overlay">
-          <div className="modal">
-            <div className="modal-header">
-              <h3>{modoEdicion ? "Editar Usuario" : "Crear Nuevo Usuario"}</h3>
-              <button className="modal-cerrar" onClick={() => setMostrarModal(false)}>
-                ✕
-              </button>
-            </div>
-            <div className="modal-body">
-              <div className="form-grupo">
-                <label>Nombre:</label>
-                <input
-                  type="text"
-                  value={modoEdicion ? usuarioSeleccionado?.username : nuevoUsuario.username}
-                  onChange={e =>
-                    modoEdicion
-                      ? setUsuarioSeleccionado({ ...usuarioSeleccionado, username: e.target.value })
-                      : setNuevoUsuario({ ...nuevoUsuario, username: e.target.value })
-                  }
-                  placeholder="Nombre"
-                  required
-                />
-              </div>
-              <div className="form-grupo">
-                <label>Apellido:</label>
-                <input
-                  type="text"
-                  value={modoEdicion ? usuarioSeleccionado?.lasname : nuevoUsuario.lasname}
-                  onChange={e =>
-                    modoEdicion
-                      ? setUsuarioSeleccionado({ ...usuarioSeleccionado, lasname: e.target.value })
-                      : setNuevoUsuario({ ...nuevoUsuario, lasname: e.target.value })
-                  }
-                  placeholder="Apellido"
-                  required
-                />
-              </div>
-              <div className="form-grupo">
-                <label>Teléfono:</label>
-                <input
-                  type="text"
-                  value={modoEdicion ? usuarioSeleccionado?.phone : nuevoUsuario.phone}
-                  onChange={e =>
-                    modoEdicion
-                      ? setUsuarioSeleccionado({ ...usuarioSeleccionado, phone: e.target.value })
-                      : setNuevoUsuario({ ...nuevoUsuario, phone: e.target.value })
-                  }
-                  placeholder="Teléfono"
-                  required
-                />
-              </div>
-              <div className="form-grupo">
-                <label>Email:</label>
-                <input
-                  type="email"
-                  value={modoEdicion ? usuarioSeleccionado?.email : nuevoUsuario.email}
-                  onChange={e =>
-                    modoEdicion
-                      ? setUsuarioSeleccionado({ ...usuarioSeleccionado, email: e.target.value })
-                      : setNuevoUsuario({ ...nuevoUsuario, email: e.target.value })
-                  }
-                  placeholder="correo@ejemplo.com"
-                  required
-                />
-              </div>
-              <div className="form-grupo">
-                <label>Contraseña:</label>
-                <input
-                  type="password"
-                  value={modoEdicion ? usuarioSeleccionado?.password : nuevoUsuario.password}
-                  onChange={e =>
-                    modoEdicion
-                      ? setUsuarioSeleccionado({ ...usuarioSeleccionado, password: e.target.value })
-                      : setNuevoUsuario({ ...nuevoUsuario, password: e.target.value })
-                  }
+      <UsuarioModal
+        mostrar={mostrarModal && seccionActiva === "usuarios"}
+        modoEdicion={modoEdicion}
+        usuarioSeleccionado={usuarioSeleccionado}
+        setUsuarioSeleccionado={setUsuarioSeleccionado}
+        nuevoUsuario={nuevoUsuario}
+        setNuevoUsuario={setNuevoUsuario}
+        onClose={() => setMostrarModal(false)}
+        onSubmit={modoEdicion ? actualizarUsuario : crearUsuario}
+      />
+      <SolicitudModal
+        mostrar={mostrarModal && seccionActiva === "solicitudes"}
+        modoEdicion={modoEdicionSolicitud}
+        solicitudSeleccionada={solicitudSeleccionada}
+        setSolicitudSeleccionada={setSolicitudSeleccionada}
+        nuevaSolicitud={nuevaSolicitud}
+        setNuevaSolicitud={setNuevaSolicitud}
+        onClose={() => setMostrarModal(false)}
+        onSubmit={modoEdicionSolicitud ? actualizarSolicitud : crearSolicitud}
+        categorias={categorias}
+      />
+      <EventoModal
+        mostrar={mostrarModal && seccionActiva === "eventos"}
+        modoEdicion={modoEdicionEvento}
+        eventoSeleccionado={eventoSeleccionado}
+        setEventoSeleccionado={setEventoSeleccionado}
+        nuevoEvento={nuevoEvento}
+        setNuevoEvento={setNuevoEvento}
+        onClose={() => setMostrarModal(false)}
+        onSubmit={modoEdicionEvento ? actualizarEvento : crearEvento}
+      />
 
-                  placeholder="Contraseña"
-                  required
-                />
-              </div>
-              <div className="form-grupo">
-                <label>Rol:</label>
-                <select
-                  value={modoEdicion ? usuarioSeleccionado?.role : nuevoUsuario.role}
-                  onChange={e =>
-                    modoEdicion
-                      ? setUsuarioSeleccionado({ ...usuarioSeleccionado, role: e.target.value })
-                      : setNuevoUsuario({ ...nuevoUsuario, role: e.target.value })
-                  }
-                  required
-                >
-                  <option value="admin">Admin</option>
-                  <option value="tesorero">Tesorero</option>
-                  <option value="participante">Participante</option>
-                  <option value="seminarista">Seminarista</option>
-                  <option value="logistico">Logístico</option>
-                  <option value="externo">Externo</option>
-                </select>
-              </div>
-              {modoEdicion && (
-                <div className="form-grupo">
-                  <label>Estado:</label>
-                  <select
-                    value={usuarioSeleccionado?.status || "active"}
-                    onChange={(e) => setUsuarioSeleccionado({ ...usuarioSeleccionado, status: e.target.value })}
-                  >
-                    <option value="active">Activo</option>
-                    <option value="inactive">Inactivo</option>
-                    <option value="suspended">Suspendido</option>
-                  </select>
-                </div>
-              )}
-            </div>
-            <div className="modal-footer">
-              <button className="btn-secondary" onClick={() => setMostrarModal(false)}>
-                Cancelar
-              </button>
-              <button className="btn-primary" onClick={modoEdicion ? actualizarUsuario : crearUsuario}>
-                {modoEdicion ? "Guardar Cambios" : "Crear Usuario"}
-              </button>
-            </div>
-          </div>
-        </div>
+      <TareaModal
+        mostrar={mostrarModal && seccionActiva === "tareas"}
+        modoEdicion={modoEdicionTarea}
+        tareaSeleccionada={tareaSeleccionada}
+        setTareaSeleccionada={setTareaSeleccionada}
+        nuevaTarea={nuevaTarea}
+        setNuevaTarea={setNuevaTarea}
+        onClose={() => setMostrarModal(false)}
+        onSubmit={modoEdicionTarea ? actualizarTarea : crearTarea}
+      />
+      <InscripcionModal
+        mostrar={mostrarModalInscripcion}
+        modoEdicion={modoEdicionInscripcion}
+        inscripcionSeleccionada={inscripcionSeleccionada}
+        setInscripcionSeleccionada={setInscripcionSeleccionada}
+        nuevaInscripcion={nuevaInscripcion}
+        setNuevaInscripcion={setNuevaInscripcion}
+        usuarios={usuarios}
+        eventos={eventos}
+        categorias={categorias}
+        onClose={() => setMostrarModalInscripcion(false)}
+        onSubmit={crearOActualizarInscripcion}
+      />
 
-      )}
+    <CabanaModal
+      mostrar={mostrarModal && seccionActiva === "cabanas"}
+      modoEdicion={modoEdicionCabana}
+      cabanaSeleccionada={cabanaSeleccionada}
+      setCabanaSeleccionada={setCabanaSeleccionada}
+      nuevaCabana={nuevaCabana}
+      setNuevaCabana={setNuevaCabana}
+      onClose={() => setMostrarModal(false)}
+      onSubmit={modoEdicionCabana ? actualizarCabana : crearCabana}
+    />
 
-      {mostrarModal && seccionActiva === "solicitudes" && (
-        <div className="modal-overlay">
-          <div className="modal">
-            <div className="modal-header">
-              <h3>{modoEdicionSolicitud ? "Editar Solicitud" : "Crear Nueva Solicitud"}</h3>
-              <button className="modal-cerrar" onClick={() => setMostrarModal(false)}>
-                ✕
-              </button>
-            </div>
-            <div className="modal-body">
-              <div className="form-grupo">
-                <label>Solicitante:</label>
-                <input
-                  type="text"
-                  value={modoEdicionSolicitud ? solicitudSeleccionada?.solicitante : nuevaSolicitud.solicitante}
-                  onChange={e =>
-                    modoEdicionSolicitud
-                      ? setSolicitudSeleccionada({ ...solicitudSeleccionada, solicitante: e.target.value })
-                      : setNuevaSolicitud({ ...nuevaSolicitud, solicitante: e.target.value })
-                  }
-                  placeholder="Nombre del solicitante"
-                  required
-                />
-              </div>
-              <div className="form-grupo">
-                <label>Email:</label>
-                <input
-                  type="email"
-                  value={modoEdicionSolicitud ? solicitudSeleccionada?.email : nuevaSolicitud.email}
-                  onChange={e =>
-                    modoEdicionSolicitud
-                      ? setSolicitudSeleccionada({ ...solicitudSeleccionada, email: e.target.value })
-                      : setNuevaSolicitud({ ...nuevaSolicitud, email: e.target.value })
-                  }
-                  placeholder="correo@ejemplo.com"
-                  required
-                />
-              </div>
-              <div className="form-grupo">
-                <label>Teléfono:</label>
-                <input
-                  type="text"
-                  value={modoEdicionSolicitud ? solicitudSeleccionada?.telefono : nuevaSolicitud.telefono}
-                  onChange={e =>
-                    modoEdicionSolicitud
-                      ? setSolicitudSeleccionada({ ...solicitudSeleccionada, telefono: e.target.value })
-                      : setNuevaSolicitud({ ...nuevaSolicitud, telefono: e.target.value })
-                  }
-                  placeholder="Teléfono"
-                  required
-                />
-              </div>
-              <div className="form-grupo">
-                <label>Tipo de Solicitud:</label>
-                <input
-                  type="text"
-                  value={modoEdicionSolicitud ? solicitudSeleccionada?.tipoSolicitud : nuevaSolicitud.tipoSolicitud}
-                  onChange={e =>
-                    modoEdicionSolicitud
-                      ? setSolicitudSeleccionada({ ...solicitudSeleccionada, tipoSolicitud: e.target.value })
-                      : setNuevaSolicitud({ ...nuevaSolicitud, tipoSolicitud: e.target.value })
-                  }
-                  placeholder="Tipo"
-                  required
-                />
-              </div>
-              <div className="form-grupo">
-                <label>Categoría:</label>
-                <input
-                  type="text"
-                  value={modoEdicionSolicitud ? solicitudSeleccionada?.categoria : nuevaSolicitud.categoria}
-                  onChange={e =>
-                    modoEdicionSolicitud
-                      ? setSolicitudSeleccionada({ ...solicitudSeleccionada, categoria: e.target.value })
-                      : setNuevaSolicitud({ ...nuevaSolicitud, categoria: e.target.value })
-                  }
-                  placeholder="Categoría"
-                  required
-                />
-              </div>
-              <div className="form-grupo">
-                <label>Descripción:</label>
-                <input
-                  type="text"
-                  value={modoEdicionSolicitud ? solicitudSeleccionada?.descripcion : nuevaSolicitud.descripcion}
-                  onChange={e =>
-                    modoEdicionSolicitud
-                      ? setSolicitudSeleccionada({ ...solicitudSeleccionada, descripcion: e.target.value })
-                      : setNuevaSolicitud({ ...nuevaSolicitud, descripcion: e.target.value })
-                  }
-                  placeholder="Descripción"
-                  required
-                />
-              </div>
-              <div className="form-grupo">
-                <label>Prioridad:</label>
-                <select
-                  value={modoEdicionSolicitud ? solicitudSeleccionada?.prioridad : nuevaSolicitud.prioridad}
-                  onChange={e =>
-                    modoEdicionSolicitud
-                      ? setSolicitudSeleccionada({ ...solicitudSeleccionada, prioridad: e.target.value })
-                      : setNuevaSolicitud({ ...nuevaSolicitud, prioridad: e.target.value })
-                  }
-                >
-                  <option value="Alta">Alta</option>
-                  <option value="Media">Media</option>
-                  <option value="Baja">Baja</option>
-                </select>
-              </div>
-              <div className="form-grupo">
-                <label>Responsable:</label>
-                <input
-                  type="text"
-                  value={modoEdicionSolicitud ? solicitudSeleccionada?.responsable : nuevaSolicitud.responsable}
-                  onChange={e =>
-                    modoEdicionSolicitud
-                      ? setSolicitudSeleccionada({ ...solicitudSeleccionada, responsable: e.target.value })
-                      : setNuevaSolicitud({ ...nuevaSolicitud, responsable: e.target.value })
-                  }
-                  placeholder="Responsable"
-                />
-              </div>
-              <div className="form-grupo">
-                <label>Observaciones:</label>
-                <input
-                  type="text"
-                  value={modoEdicionSolicitud ? solicitudSeleccionada?.observaciones : nuevaSolicitud.observaciones}
-                  onChange={e =>
-                    modoEdicionSolicitud
-                      ? setSolicitudSeleccionada({ ...solicitudSeleccionada, observaciones: e.target.value })
-                      : setNuevaSolicitud({ ...nuevaSolicitud, observaciones: e.target.value })
-                  }
-                  placeholder="Observaciones"
-                />
-              </div>
-            </div>
-            <div className="modal-footer">
-              <button className="btn-secondary" onClick={() => setMostrarModal(false)}>
-                Cancelar
-              </button>
-              <button
-                className="btn-primary"
-                onClick={modoEdicionSolicitud ? actualizarSolicitud : crearSolicitud}
-              >
-                {modoEdicionSolicitud ? "Guardar Cambios" : "Crear Solicitud"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal para Eventos */}
-      {mostrarModal && seccionActiva === "eventos" && (
-        <div className="modal-overlay">
-          <div className="modal">
-            <div className="modal-header">
-              <h3>{modoEdicionEvento ? "Editar Evento" : "Crear Nuevo Evento"}</h3>
-              <button className="modal-cerrar" onClick={() => setMostrarModal(false)}>
-                ✕
-              </button>
-            </div>
-            <div className="modal-body">
-              <div className="form-grupo">
-                <label>Nombre del Evento:</label>
-                <input
-                  type="text"
-                  value={modoEdicionEvento ? eventoSeleccionado?.name : nuevoEvento.name}
-                  onChange={e =>
-                    modoEdicionEvento
-                      ? setEventoSeleccionado({ ...eventoSeleccionado, name: e.target.value })
-                      : setNuevoEvento({ ...nuevoEvento, name: e.target.value })
-                  }
-                  placeholder="Nombre del evento"
-                  required
-                />
-              </div>
-              <div className="form-grupo">
-                <label>Descripción:</label>
-                <textarea
-                  value={modoEdicionEvento ? eventoSeleccionado?.description : nuevoEvento.description}
-                  onChange={e =>
-                    modoEdicionEvento
-                      ? setEventoSeleccionado({ ...eventoSeleccionado, description: e.target.value })
-                      : setNuevoEvento({ ...nuevoEvento, description: e.target.value })
-                  }
-                  placeholder="Descripción del evento"
-                  rows="3"
-                  required
-                />
-              </div>
-              <div className="form-grupo">
-                <label>Precio:</label>
-                <input
-                  type="number"
-                  value={modoEdicionEvento ? eventoSeleccionado?.price : nuevoEvento.price}
-                  onChange={e =>
-                    modoEdicionEvento
-                      ? setEventoSeleccionado({ ...eventoSeleccionado, price: Number(e.target.value) })
-                      : setNuevoEvento({ ...nuevoEvento, price: Number(e.target.value) })
-                  }
-                  placeholder="Precio"
-                  min="0"
-                  required
-                />
-              </div>
-              <div className="form-grupo">
-                <label>Categoría (ID):</label>
-                <input
-                  type="text"
-                  value={modoEdicionEvento ? eventoSeleccionado?.categoria : nuevoEvento.categoria}
-                  onChange={e =>
-                    modoEdicionEvento
-                      ? setEventoSeleccionado({ ...eventoSeleccionado, categoria: e.target.value })
-                      : setNuevoEvento({ ...nuevoEvento, categoria: e.target.value })
-                  }
-                  placeholder="ID de la categoría"
-                  required
-                />
-              </div>
-              <div className="form-grupo">
-                <label>SubCategoría:</label>
-                <input
-                  type="text"
-                  value={modoEdicionEvento ? eventoSeleccionado?.subCategoria : nuevoEvento.subCategoria}
-                  onChange={e =>
-                    modoEdicionEvento
-                      ? setEventoSeleccionado({ ...eventoSeleccionado, subCategoria: e.target.value })
-                      : setNuevoEvento({ ...nuevoEvento, subCategoria: e.target.value })
-                  }
-                  placeholder="SubCategoría"
-                />
-              </div>
-              <div className="form-grupo">
-                <label>Etiquetas (separadas por coma):</label>
-                <input
-                  type="text"
-                  value={modoEdicionEvento ? 
-                    (eventoSeleccionado?.etiquetas || []).join(", ") : 
-                    (nuevoEvento.etiquetas || []).join(", ")
-                  }
-                  onChange={e => {
-                    const etiquetas = e.target.value.split(",").map(tag => tag.trim()).filter(tag => tag);
-                    modoEdicionEvento
-                      ? setEventoSeleccionado({ ...eventoSeleccionado, etiquetas: etiquetas })
-                      : setNuevoEvento({ ...nuevoEvento, etiquetas: etiquetas });
-                  }}
-                  placeholder="etiqueta1, etiqueta2, etiqueta3"
-                />
-              </div>
-              <div className="form-grupo">
-                <label>URL de Imagen:</label>
-                <input
-                  type="text"
-                  value={modoEdicionEvento ? eventoSeleccionado?.images : nuevoEvento.images}
-                  onChange={e =>
-                    modoEdicionEvento
-                      ? setEventoSeleccionado({ ...eventoSeleccionado, images: e.target.value })
-                      : setNuevoEvento({ ...nuevoEvento, images: e.target.value })
-                  }
-                  placeholder="URL de la imagen"
-                />
-              </div>
-              <div className="form-grupo">
-                <label>Prioridad:</label>
-                <select
-                  value={modoEdicionEvento ? eventoSeleccionado?.prioridad : nuevoEvento.prioridad}
-                  onChange={e =>
-                    modoEdicionEvento
-                      ? setEventoSeleccionado({ ...eventoSeleccionado, prioridad: e.target.value })
-                      : setNuevoEvento({ ...nuevoEvento, prioridad: e.target.value })
-                  }
-                >
-                  <option value="Alta">Alta</option>
-                  <option value="Normal">Normal</option>
-                  <option value="Baja">Baja</option>
-                </select>
-              </div>
-              <div className="form-grupo">
-                <label>Observaciones:</label>
-                <textarea
-                  value={modoEdicionEvento ? eventoSeleccionado?.observaciones : nuevoEvento.observaciones}
-                  onChange={e =>
-                    modoEdicionEvento
-                      ? setEventoSeleccionado({ ...eventoSeleccionado, observaciones: e.target.value })
-                      : setNuevoEvento({ ...nuevoEvento, observaciones: e.target.value })
-                  }
-                  placeholder="Observaciones adicionales"
-                  rows="2"
-                />
-              </div>
-              {modoEdicionEvento && (
-                <div className="form-grupo">
-                  <label>Estado:</label>
-                  <select
-                    value={eventoSeleccionado?.active ? "true" : "false"}
-                    onChange={e => setEventoSeleccionado({ 
-                      ...eventoSeleccionado, 
-                      active: e.target.value === "true" 
-                    })}
-                  >
-                    <option value="true">Activo</option>
-                    <option value="false">Inactivo</option>
-                  </select>
-                </div>
-              )}
-            </div>
-            <div className="modal-footer">
-              <button className="btn-secondary" onClick={() => setMostrarModal(false)}>
-                Cancelar
-              </button>
-              <button
-                className="btn-primary"
-                onClick={modoEdicionEvento ? actualizarEvento : crearEvento}
-              >
-                {modoEdicionEvento ? "Guardar Cambios" : "Crear Evento"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal para Tareas */}
-      {mostrarModal && seccionActiva === "tareas" && (
-        <div className="modal-overlay">
-          <div className="modal">
-            <div className="modal-header">
-              <h3>{modoEdicionTarea ? "Editar Tarea" : "Crear Nueva Tarea"}</h3>
-              <button className="modal-cerrar" onClick={() => setMostrarModal(false)}>
-                ✕
-              </button>
-            </div>
-            <div className="modal-body">
-              <div className="form-grupo">
-                <label>Título de la Tarea:</label>
-                <input
-                  type="text"
-                  value={modoEdicionTarea ? tareaSeleccionada?.titulo : nuevaTarea.titulo}
-                  onChange={e =>
-                    modoEdicionTarea
-                      ? setTareaSeleccionada({ ...tareaSeleccionada, titulo: e.target.value })
-                      : setNuevaTarea({ ...nuevaTarea, titulo: e.target.value })
-                  }
-                  placeholder="Título de la tarea"
-                  required
-                />
-              </div>
-              <div className="form-grupo">
-                <label>Descripción:</label>
-                <textarea
-                  value={modoEdicionTarea ? tareaSeleccionada?.descripcion : nuevaTarea.descripcion}
-                  onChange={e =>
-                    modoEdicionTarea
-                      ? setTareaSeleccionada({ ...tareaSeleccionada, descripcion: e.target.value })
-                      : setNuevaTarea({ ...nuevaTarea, descripcion: e.target.value })
-                  }
-                  placeholder="Descripción detallada de la tarea"
-                  rows="3"
-                  required
-                />
-              </div>
-              <div className="form-grupo">
-                <label>Estado:</label>
-                <select
-                  value={modoEdicionTarea ? tareaSeleccionada?.estado : nuevaTarea.estado}
-                  onChange={e =>
-                    modoEdicionTarea
-                      ? setTareaSeleccionada({ ...tareaSeleccionada, estado: e.target.value })
-                      : setNuevaTarea({ ...nuevaTarea, estado: e.target.value })
-                  }
-                >
-                  <option value="pendiente">Pendiente</option>
-                  <option value="en progreso">En Progreso</option>
-                  <option value="completada">Completada</option>
-                  <option value="cancelada">Cancelada</option>
-                </select>
-              </div>
-              <div className="form-grupo">
-                <label>Prioridad:</label>
-                <select
-                  value={modoEdicionTarea ? tareaSeleccionada?.prioridad : nuevaTarea.prioridad}
-                  onChange={e =>
-                    modoEdicionTarea
-                      ? setTareaSeleccionada({ ...tareaSeleccionada, prioridad: e.target.value })
-                      : setNuevaTarea({ ...nuevaTarea, prioridad: e.target.value })
-                  }
-                >
-                  <option value="alta">Alta</option>
-                  <option value="media">Media</option>
-                  <option value="baja">Baja</option>
-                </select>
-              </div>
-              <div className="form-grupo">
-                <label>Asignado A (ID del Usuario):</label>
-                <input
-                  type="text"
-                  value={modoEdicionTarea ? tareaSeleccionada?.asignadoA : nuevaTarea.asignadoA}
-                  onChange={e =>
-                    modoEdicionTarea
-                      ? setTareaSeleccionada({ ...tareaSeleccionada, asignadoA: e.target.value })
-                      : setNuevaTarea({ ...nuevaTarea, asignadoA: e.target.value })
-                  }
-                  placeholder="ID del usuario a quien se asigna"
-                  required
-                />
-              </div>
-              <div className="form-grupo">
-                <label>Asignado Por (ID del Usuario):</label>
-                <input
-                  type="text"
-                  value={modoEdicionTarea ? tareaSeleccionada?.asignadoPor : nuevaTarea.asignadoPor}
-                  onChange={e =>
-                    modoEdicionTarea
-                      ? setTareaSeleccionada({ ...tareaSeleccionada, asignadoPor: e.target.value })
-                      : setNuevaTarea({ ...nuevaTarea, asignadoPor: e.target.value })
-                  }
-                  placeholder="ID del usuario que asigna"
-                  required
-                />
-              </div>
-              <div className="form-grupo">
-                <label>Fecha Límite:</label>
-                <input
-                  type="date"
-                  value={modoEdicionTarea ? tareaSeleccionada?.fechaLimite : nuevaTarea.fechaLimite}
-                  onChange={e =>
-                    modoEdicionTarea
-                      ? setTareaSeleccionada({ ...tareaSeleccionada, fechaLimite: e.target.value })
-                      : setNuevaTarea({ ...nuevaTarea, fechaLimite: e.target.value })
-                  }
-                  required
-                />
-              </div>
-            </div>
-            <div className="modal-footer">
-              <button className="btn-secondary" onClick={() => setMostrarModal(false)}>
-                Cancelar
-              </button>
-              <button
-                className="btn-primary"
-                onClick={modoEdicionTarea ? actualizarTarea : crearTarea}
-              >
-                {modoEdicionTarea ? "Guardar Cambios" : "Crear Tarea"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
+    <ReservasModal
+      mostrar={mostrarModal && seccionActiva === "reservas"}
+      modoEdicion={modoEdicionReserva}
+      reservaSeleccionada={reservaSeleccionada}
+      setReservaSeleccionada={setReservaSeleccionada}
+      nuevaReserva={nuevaReserva}
+      setNuevaReserva={setNuevaReserva}
+      usuarios={usuarios}
+      cabanas={cabanas}
+      categorias={categorias}
+      onClose={() => setMostrarModal(false)}
+      onSubmit={modoEdicionReserva ? actualizarReserva : crearReserva}
+/>
     </div>
   )
 }

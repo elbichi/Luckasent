@@ -16,9 +16,7 @@ module.exports = {
     ROLES: {
         ADMIN: 'admin',
         TESORERO: 'tesorero',
-        PARTICIPANTE: 'participante',
         SEMINARISTA: 'seminarista',
-        LOGISTICO: 'logistico',
         EXTERNO: 'externo'
     }
 }

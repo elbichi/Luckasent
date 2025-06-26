@@ -3,6 +3,9 @@ const { body, param } = require('express-validator');
 const router = express.Router();
 const solicitudController = require('../controllers/solicitudController');
 const { authJwt, role } = require('../middlewares');
+const Inscripcion = require('../models/Inscripciones');
+const Reserva = require('../models/Reservas');
+const Solicitud = require('../models/Solicitud');
 
 // Validaciones para crear y actualizar solicitud
 const validarSolicitud = [
@@ -47,30 +50,30 @@ router.use(authJwt.verifyToken);
 // Crear solicitud (roles permitidos)
 router.post(
   '/',
-  role.checkRole('admin', 'participante', 'seminarista', 'tesorero', 'logistico', 'externo'),
+  role.checkRole('admin', 'tesorero', 'seminarista', 'externo'),
   validarSolicitud,
   solicitudController.crearSolicitud
 );
 
-// Consultar todas las solicitudes (admin y logístico)
+// Consultar todas las solicitudes (admin y tesorero)
 router.get(
   '/',
-  role.checkRole('admin', 'logistico'),
+  role.checkRole('admin', 'tesorero'),
   solicitudController.obtenerSolicitudes
 );
 
-// Consultar solicitud por ID (admin y logístico)
+// Consultar solicitud por ID (admin y tesorero)
 router.get(
   '/:id',
-  role.checkRole('admin', 'logistico'),
+  role.checkRole('admin', 'tesorero'),
   validarId,
   solicitudController.obtenerSolicitudPorId
 );
 
-// Actualizar solicitud (solo admin y logístico)
+// Actualizar solicitud (solo admin y tesorero)
 router.put(
   '/:id',
-  role.checkRole('admin', 'logistico'),
+  role.checkRole('admin', 'tesorero'),
   validarId,
   validarSolicitud,
   solicitudController.actualizarSolicitud
@@ -87,8 +90,47 @@ router.delete(
 // Consultar solicitudes por usuario autenticado (cada usuario ve sus solicitudes)
 router.get(
   '/usuario/mis-solicitudes',
-  role.checkRole('participante', 'seminarista', 'tesorero', 'logistico', 'externo'),
+  role.checkRole('admin', 'tesorero', 'seminarista', 'externo'),
   solicitudController.obtenerSolicitudesPorUsuario
+);
+
+// Endpoint para obtener todo unificado
+router.get(
+  '/unificado',
+  role.checkRole('admin', 'tesorero', 'seminarista', 'externo'),
+  async (req, res) => {
+    try {
+      const solicitudes = await Solicitud.find()
+        .populate('solicitante', 'username email')
+        .populate('categoria', 'nombre descripcion codigo')
+        .populate('responsable', 'username email')
+        .lean();
+
+      const inscripciones = await Inscripcion.find()
+        .populate('usuario', 'username email')
+        .populate('evento', 'name')
+        .populate('categoria', 'nombre descripcion codigo')
+        .lean();
+
+      const reservas = await Reserva.find()
+        .populate('usuario', 'username email')
+        .populate('recurso', 'nombre')
+        .populate('categoria', 'nombre descripcion codigo')
+        .lean();
+
+      res.json({
+        success: true,
+        data: {
+          solicitudes,
+          inscripciones,
+          reservas
+        }
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
 );
 
 module.exports = router;

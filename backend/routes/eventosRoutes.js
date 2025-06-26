@@ -16,21 +16,21 @@ const validarEvento = [
 router.get('/', eventosController.getAllEvents);
 // Obtener evento por ID
 router.get('/:id', eventosController.getEventById);
-// Crear evento (solo admin y logistico)
+// Crear evento (solo admin y tesorero)
 router.post(
   '/',
-  [authJwt.verifyToken, role.checkRole('admin', 'logistico'), validarEvento],
+  [authJwt.verifyToken, role.checkRole('admin', 'tesorero'), validarEvento],
   eventosController.createEvent
 );
-// Actualizar evento (solo admin y logistico)
-router.put('/:id', [authJwt.verifyToken, role.checkRole('admin', 'logistico')], eventosController.updateEvent);
+// Actualizar evento (solo admin y tesorero)
+router.put('/:id', [authJwt.verifyToken, role.checkRole('admin', 'tesorero')], eventosController.updateEvent);
 // Eliminar evento (solo admin)
 router.delete('/:id', [authJwt.verifyToken, role.checkRole('admin')], eventosController.deleteEvent);
-// Deshabilitar evento (solo admin)
-router.patch('/:id/disable', [authJwt.verifyToken, role.checkRole('admin','logistico','tesorero')], eventosController.disableEvent);
+// Deshabilitar evento (solo admin y tesorero)
+router.patch('/:id/disable', [authJwt.verifyToken, role.checkRole('admin','tesorero')], eventosController.disableEvent);
 // Ruta para categorizar evento
 router.patch('/:id/categorizar', 
-  [authJwt.verifyToken, role.checkRole('admin', 'logistico')], 
+  [authJwt.verifyToken, role.checkRole('admin', 'tesorero')], 
   eventosController.categorizarEvento
 );
 // Ruta para obtener eventos por categoría

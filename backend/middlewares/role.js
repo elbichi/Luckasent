@@ -19,33 +19,15 @@ const checkRole = (...allowedRoles) =>{
 };
 
 //Funciones especificas de rol
-const isAdmin = (req, res, next)=>{
-    return checkRole('admin')(req, res, next);
-};
-
-const isTesorero = (req, res, next)=>{
-    return checkRole('tesorero')(req, res, next);
-};
-
-const isParticipante= (req, res, next)=>{
-    return checkRole('participante')(req, res, next);
-};
-const isSeminarista = (req, res, next)=>{
-    return checkRole('seminarista')(req, res, next);
-};
-const isLogistico = (req, res, next)=>{
-    return checkRole('logistico')(req, res, next);
-};
-const isExterno = (req, res, next)=>{
-    return checkRole('externo')(req, res, next);
-};
+const isAdmin = (req, res, next) => checkRole('admin')(req, res, next);
+const isTesorero = (req, res, next) => checkRole('tesorero')(req, res, next);
+const isSeminarista = (req, res, next) => checkRole('seminarista')(req, res, next);
+const isExterno = (req, res, next) => checkRole('externo')(req, res, next);
 
 module.exports = {
-    checkRole,
-    isAdmin,
-    isTesorero,
-    isParticipante,
-    isSeminarista,
-    isLogistico,
-    isExterno
+  checkRole,
+  isAdmin,
+  isTesorero,
+  isSeminarista,
+  isExterno
 };

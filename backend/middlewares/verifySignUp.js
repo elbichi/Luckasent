@@ -1,5 +1,5 @@
 const User = require('../models/User');
-const ROLES = ['admin', 'tesorero', 'participante','seminarista','logistico','externo', 'user'];
+const ROLES = ['admin', 'tesorero', 'seminarista', 'externo'];
 
 const checkDuplicateUsernameOrEmail = async (req, res, next) => {
     try {
