@@ -3,6 +3,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const morgan = require('morgan');
+const path = require('path');
 const config = require('./config');
 const{MongoClient, ObjectId} = require('mongodb');
 //importar Rutas
@@ -48,6 +49,41 @@ app.use('/api/categorizacion', categotizacionRoutes);
 app.use('/api/reservas', reservasRoutes); // Asegúrate de que esta ruta exista
 app.use('/api/inscripciones', inscripcionesRoutes); // Asegúrate de que esta ruta exista
 app.use('/api/reportes', ReportesRoutes);
+
+// Servir archivos estáticos del frontend
+const frontendPath = path.join(__dirname, '../frontend/build');
+app.use(express.static(frontendPath));
+
+// Middleware para manejar rutas del frontend (para React Router)
+// Rutas específicas del frontend para admin y external
+app.get('/login', (req, res) => {
+  res.sendFile(path.join(frontendPath, 'index.html'));
+});
+
+app.get('/signup', (req, res) => {
+  res.sendFile(path.join(frontendPath, 'index.html'));
+});
+
+app.get('/signup/registro', (req, res) => {
+  res.sendFile(path.join(frontendPath, 'index.html'));
+});
+
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(frontendPath, 'index.html'));
+});
+
+app.get('/admin/users', (req, res) => {
+  res.sendFile(path.join(frontendPath, 'index.html'));
+});
+
+app.get('/external', (req, res) => {
+  res.sendFile(path.join(frontendPath, 'index.html'));
+});
+
+// Ruta raíz redirige al login
+app.get('/', (req, res) => {
+  res.redirect('/login');
+});
 
 
 
