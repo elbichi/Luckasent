@@ -1,8 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/userController');
-const { verifyToken } = require('../middlewares/authJwt');
-const { checkRole } = require('../middlewares/role');
+const { authJwt, role } = require('../middlewares');
 
 // Middleware de diagnóstico para todas las rutas
 router.use((req, res, next) => {
@@ -16,41 +15,18 @@ router.use((req, res, next) => {
     next();
 });
 
-// GET /api/users - Listar usuarios (admin y coordinador pueden ver todos, auxiliar solo se ve a sí mismo)
-router.get('/',
-    verifyToken,
-    checkRole('admin'),
-    userController.getAllUsers
-);
+// Middleware de autenticación para todas las rutas
+router.use(authJwt.verifyToken);
 
-// POST /api/users - Crear usuario (solo admin)
-router.post('/',
-    verifyToken,
-    checkRole('admin'),
-    userController.createUser
-);
+// Rutas de consulta (admin y tesorero)
+router.get('/', role.checkRole('admin', 'tesorero'), userController.getAllUsers);
+router.get('/:id', role.checkRole('admin', 'tesorero'), userController.getUserById);
 
-// GET /api/users/:id - Obtener usuario específico (admin y coordinador pueden ver cualquiera, auxiliar solo se ve a sí mismo)
-router.get('/:id',
-    verifyToken,
-    checkRole('admin'),
-    userController.getUserById
-);
+// Rutas de creación y modificación (admin y tesorero)
+router.post('/', role.checkRole('admin', 'tesorero'), userController.createUser);
+router.put('/:id', role.checkRole('admin', 'tesorero'), userController.updateUser);
 
-
-
-// PUT /api/users/:id - Actualizar usuario (admin y coordinador pueden actualizar)
-router.put('/:id',
-    verifyToken,
-    checkRole('admin'),
-    userController.updateUser
-);
-
-// DELETE /api/users/:id - Eliminar usuario (solo admin)
-router.delete('/:id',
-    verifyToken,
-    checkRole('admin'),
-    userController.deleteUser
-);
+// Rutas de eliminación (solo admin)
+router.delete('/:id', role.isAdmin, userController.deleteUser);
 
 module.exports = router;

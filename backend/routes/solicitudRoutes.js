@@ -44,130 +44,54 @@ const validarId = [
   param('id').isMongoId().withMessage('ID inválido')
 ];
 
-// Solo usuarios autenticados pueden acceder
+// Middleware de autenticación para todas las rutas
 router.use(authJwt.verifyToken);
 
-// Crear solicitud (roles permitidos)
-router.post(
-  '/',
-  role.checkRole('admin', 'tesorero', 'seminarista', 'externo'),
-  validarSolicitud,
-  solicitudController.crearSolicitud
-);
+// Rutas de consulta - Todos los roles autenticados
+router.get('/usuario/mis-solicitudes', solicitudController.obtenerSolicitudesPorUsuario);
+router.get('/unificado', async (req, res) => {
+  try {
+    const solicitudes = await Solicitud.find()
+      .populate('solicitante', 'username email')
+      .populate('categoria', 'nombre descripcion codigo')
+      .populate('responsable', 'username email')
+      .lean();
 
-// Consultar todas las solicitudes (admin y tesorero)
-router.get(
-  '/',
-  role.checkRole('admin', 'tesorero'),
-  solicitudController.obtenerSolicitudes
-);
+    const inscripciones = await Inscripcion.find()
+      .populate('usuario', 'username email')
+      .populate('evento', 'name')
+      .populate('categoria', 'nombre descripcion codigo')
+      .lean();
 
-// Endpoint para obtener todo unificado (debe ir ANTES de '/:id')
-router.get(
-  '/unificado',
-  role.checkRole('admin', 'tesorero', 'seminarista', 'externo'),
-  async (req, res) => {
-    try {
-      const solicitudes = await Solicitud.find()
-        .populate('solicitante', 'username email')
-        .populate('categoria', 'nombre descripcion codigo')
-        .populate('responsable', 'username email')
-        .lean();
+    const reservas = await Reserva.find()
+      .populate('cabana', 'nombre descripcion capacidad categoria estado')
+      .lean();
 
-      const inscripciones = await Inscripcion.find()
-        .populate('usuario', 'username email')
-        .populate('evento', 'name')
-        .populate('categoria', 'nombre descripcion codigo')
-        .lean();
-
-      const reservas = await Reserva.find()
-        .populate('cabana', 'nombre descripcion capacidad categoria estado')
-        .lean();
-
-      res.json({
-        success: true,
-        data: {
-          solicitudes,
-          inscripciones,
-          reservas
-        }
-      });
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ success: false, message: error.message });
-    }
+    res.json({
+      success: true,
+      data: {
+        solicitudes,
+        inscripciones,
+        reservas
+      }
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: error.message });
   }
-);
+});
 
-// Consultar solicitud por ID (admin y tesorero)
-router.get(
-  '/:id',
-  role.checkRole('admin', 'tesorero'),
-  validarId,
-  solicitudController.obtenerSolicitudPorId
-);
+// Rutas de consulta - Solo admin y tesorero
+router.get('/', role.checkRole('admin', 'tesorero'), solicitudController.obtenerSolicitudes);
+router.get('/:id', role.checkRole('admin', 'tesorero'), validarId, solicitudController.obtenerSolicitudPorId);
 
-// Actualizar solicitud (solo admin y tesorero)
-router.put(
-  '/:id',
-  role.checkRole('admin', 'tesorero'),
-  validarId,
-  validarSolicitud,
-  solicitudController.actualizarSolicitud
-);
+// Rutas de creación - Todos los roles pueden crear solicitudes
+router.post('/', validarSolicitud, solicitudController.crearSolicitud);
 
-// Eliminar solicitud (solo admin)
-router.delete(
-  '/:id',
-  role.checkRole('admin'),
-  validarId,
-  solicitudController.eliminarSolicitud
-);
+// Rutas de modificación - Solo admin y tesorero
+router.put('/:id', role.checkRole('admin', 'tesorero'), validarId, validarSolicitud, solicitudController.actualizarSolicitud);
 
-// Consultar solicitudes por usuario autenticado (cada usuario ve sus solicitudes)
-router.get(
-  '/usuario/mis-solicitudes',
-  role.checkRole('admin', 'tesorero', 'seminarista', 'externo'),
-  solicitudController.obtenerSolicitudesPorUsuario
-);
-
-// Endpoint para obtener todo unificado
-router.get(
-  '/unificado',
-  role.checkRole('admin', 'tesorero', 'seminarista', 'externo'),
-  async (req, res) => {
-    try {
-      const solicitudes = await Solicitud.find()
-        .populate('solicitante', 'username email')
-        .populate('categoria', 'nombre descripcion codigo')
-        .populate('responsable', 'username email')
-        .lean();
-
-      const inscripciones = await Inscripcion.find()
-        .populate('usuario', 'username email')
-        .populate('evento', 'name')
-        .populate('categoria', 'nombre descripcion codigo')
-        .lean();
-
-      const reservas = await Reserva.find()
-        .populate('usuario', 'username email')
-        .populate('recurso', 'nombre')
-        .populate('categoria', 'nombre descripcion codigo')
-        .lean();
-
-      res.json({
-        success: true,
-        data: {
-          solicitudes,
-          inscripciones,
-          reservas
-        }
-      });
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ success: false, message: error.message });
-    }
-  }
-);
+// Rutas de eliminación - Solo admin
+router.delete('/:id', role.isAdmin, validarId, solicitudController.eliminarSolicitud);
 
 module.exports = router;

@@ -1,16 +1,20 @@
 const express = require('express');
 const router = express.Router();
 const reservasController = require('../controllers/reservasController');
-const { authJwt } = require('../middlewares');
+const { authJwt, role } = require('../middlewares');
 
-//proteger todas las rutas 
+// Middleware de autenticación para todas las rutas
 router.use(authJwt.verifyToken);
 
-//CRUD
-router.post('/', reservasController.crearReserva);
+// Rutas de consulta (todos los roles autenticados)
 router.get('/', reservasController.obtenerReservas);
 router.get('/:id', reservasController.obtenerReservaPorId);
-router.put('/:id', reservasController.actualizarReserva);
-router.delete('/:id', reservasController.eliminarReserva);
+
+// Rutas de creación y modificación (admin y tesorero)
+router.post('/', role.checkRole('admin', 'tesorero'), reservasController.crearReserva);
+router.put('/:id', role.checkRole('admin', 'tesorero'), reservasController.actualizarReserva);
+
+// Rutas de eliminación (solo admin)
+router.delete('/:id', role.isAdmin, reservasController.eliminarReserva);
 
 module.exports = router;

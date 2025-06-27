@@ -12,29 +12,20 @@ const validarEvento = [
   body('categoria').isMongoId().withMessage('ID de categoría inválido')
 ];
 
-// Listar todos los eventos
+// Middleware de autenticación para todas las rutas
+router.use(authJwt.verifyToken);
+
+// Rutas de consulta (todos los roles autenticados)
 router.get('/', eventosController.getAllEvents);
-// Obtener evento por ID
 router.get('/:id', eventosController.getEventById);
-// Crear evento (solo admin y tesorero)
-router.post(
-  '/',
-  [authJwt.verifyToken, role.checkRole('admin', 'tesorero'), validarEvento],
-  eventosController.createEvent
-);
-// Actualizar evento (solo admin y tesorero)
-router.put('/:id', [authJwt.verifyToken, role.checkRole('admin', 'tesorero')], eventosController.updateEvent);
-// Eliminar evento (solo admin)
-router.delete('/:id', [authJwt.verifyToken, role.checkRole('admin')], eventosController.deleteEvent);
-// Deshabilitar evento (solo admin y tesorero)
-router.patch('/:id/disable', [authJwt.verifyToken, role.checkRole('admin','tesorero')], eventosController.disableEvent);
-// Ruta para categorizar evento
-router.patch('/:id/categorizar', 
-  [authJwt.verifyToken, role.checkRole('admin', 'tesorero')], 
-  eventosController.categorizarEvento
-);
-// Ruta para obtener eventos por categoría
-router.get('/categoria', 
-  eventosController.getEventosPorCategoria
-);
+router.get('/categoria', eventosController.getEventosPorCategoria);
+
+// Rutas de creación y modificación (admin y tesorero)
+router.post('/', role.checkRole('admin', 'tesorero'), validarEvento, eventosController.createEvent);
+router.put('/:id', role.checkRole('admin', 'tesorero'), eventosController.updateEvent);
+router.patch('/:id/disable', role.checkRole('admin', 'tesorero'), eventosController.disableEvent);
+router.patch('/:id/categorizar', role.checkRole('admin', 'tesorero'), eventosController.categorizarEvento);
+
+// Rutas de eliminación (solo admin)
+router.delete('/:id', role.isAdmin, eventosController.deleteEvent);
 module.exports = router;

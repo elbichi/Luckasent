@@ -8,18 +8,22 @@ const {
   eliminarCategoria,
   categorizarSolicitud 
 } = require('../controllers/categorizacionController');
-const { authJwt } = require('../middlewares');
+const { authJwt, role } = require('../middlewares');
 
-// Middleware de autenticación
+// Middleware de autenticación para todas las rutas
 router.use(authJwt.verifyToken);
 
-// Rutas
-router.post('/', crearCategoria);
+// Rutas de consulta (todos los roles autenticados)
 router.get('/', obtenerCategorias);
 router.get('/:id', obtenerCategoriaPorId);
-router.put('/:id', actualizarCategoria);
-router.delete('/:id', eliminarCategoria);
-router.put('/solicitud/:id/categorizar', categorizarSolicitud);
+
+// Rutas de creación y modificación (admin y tesorero)
+router.post('/', role.checkRole('admin', 'tesorero'), crearCategoria);
+router.put('/:id', role.checkRole('admin', 'tesorero'), actualizarCategoria);
+router.put('/solicitud/:id/categorizar', role.checkRole('admin', 'tesorero'), categorizarSolicitud);
+
+// Rutas de eliminación (solo admin)
+router.delete('/:id', role.isAdmin, eliminarCategoria);
 
 module.exports = router;
 

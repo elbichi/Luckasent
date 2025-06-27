@@ -40,7 +40,7 @@ router.post('/signup',
         console.log('[AuthRoutes] middlewares de verificacion de registro ');
         next();
     },
-    verifySignUp.checkDuplicateUsernameOrEmail,
+    verifySignUp.checkDuplicateEmailOrPhone,
     verifySignUp.checkRolesExisted,
     authController.signup
 );

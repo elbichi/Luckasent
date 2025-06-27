@@ -1,17 +1,8 @@
 const User = require('../models/User');
 const ROLES = ['admin', 'tesorero', 'seminarista', 'externo'];
 
-const checkDuplicateUsernameOrEmail = async (req, res, next) => {
+const checkDuplicateEmailOrPhone = async (req, res, next) => {
     try {
-        // Verificar username
-        const userByUsername = await User.findOne({ username: req.body.username });
-        if (userByUsername) {
-            return res.status(400).json({ 
-                success: false, 
-                message: "El nombre de usuario ya está en uso" 
-            });
-        }
-        
         // Verificar email
         const userByEmail = await User.findOne({ email: req.body.email });
         if (userByEmail) {
@@ -21,11 +12,20 @@ const checkDuplicateUsernameOrEmail = async (req, res, next) => {
             });
         }
         
+        // Verificar teléfono
+        const userByPhone = await User.findOne({ phone: req.body.phone });
+        if (userByPhone) {
+            return res.status(400).json({ 
+                success: false, 
+                message: "El teléfono ya está en uso" 
+            });
+        }
+        
         next();
     } catch (error) {
         res.status(500).json({ 
             success: false, 
-            message: "Error al verificar usuario/email", 
+            message: "Error al verificar email/teléfono", 
             error: error.message 
         });
     }
@@ -44,6 +44,6 @@ const checkRolesExisted = (req, res, next) => {
 };
 
 module.exports = {
-    checkDuplicateUsernameOrEmail,
+    checkDuplicateEmailOrPhone,
     checkRolesExisted
 };

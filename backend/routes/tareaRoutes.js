@@ -1,16 +1,20 @@
 const express = require('express');
 const router = express.Router();
 const tareaController = require('../controllers/tareaController');
-const { authJwt } = require('../middlewares');
+const { authJwt, role } = require('../middlewares');
 
-// Agregar middleware de autenticación
+// Middleware de autenticación para todas las rutas
 router.use(authJwt.verifyToken);
 
-// CRUD de tareas
-router.post('/', tareaController.crearTarea);
+// Rutas de consulta (todos los roles autenticados)
 router.get('/', tareaController.obtenerTareas);
 router.get('/:id', tareaController.obtenerTareaPorId);
-router.put('/:id', tareaController.actualizarTarea);
-router.delete('/:id', tareaController.eliminarTarea);
+
+// Rutas de creación y modificación (admin y tesorero)
+router.post('/', role.checkRole('admin', 'tesorero'), tareaController.crearTarea);
+router.put('/:id', role.checkRole('admin', 'tesorero'), tareaController.actualizarTarea);
+
+// Rutas de eliminación (solo admin)
+router.delete('/:id', role.isAdmin, tareaController.eliminarTarea);
 
 module.exports = router;

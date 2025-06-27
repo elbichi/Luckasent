@@ -8,17 +8,21 @@ const {
   eliminarCabana,
   categorizarCabana 
 } = require('../controllers/cabanasController');
-const { authJwt } = require('../middlewares');
+const { authJwt, role } = require('../middlewares');
 
-// Middleware de autenticación
+// Middleware de autenticación para todas las rutas
 router.use(authJwt.verifyToken);
 
-// Rutas
-router.post('/', crearCabana);
+// Rutas de consulta (todos los roles autenticados)
 router.get('/', obtenerCabanas);
 router.get('/:id', obtenerCabanaPorId);
-router.put('/:id', actualizarCabana);
-router.delete('/:id', eliminarCabana);
-router.put('/:id/categorizar', categorizarCabana);
+
+// Rutas de creación y modificación (admin y tesorero)
+router.post('/', role.checkRole('admin', 'tesorero'), crearCabana);
+router.put('/:id', role.checkRole('admin', 'tesorero'), actualizarCabana);
+router.put('/:id/categorizar', role.checkRole('admin', 'tesorero'), categorizarCabana);
+
+// Rutas de eliminación (solo admin)
+router.delete('/:id', role.isAdmin, eliminarCabana);
 
 module.exports = router;
