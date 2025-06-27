@@ -1,7 +1,7 @@
-import React  from "react";
+import React from "react";
 
-const  InscripcionModal =({
- mostrar,
+const InscripcionModal = ({
+  mostrar,
   modoEdicion,
   inscripcionSeleccionada,
   setInscripcionSeleccionada,
@@ -13,10 +13,10 @@ const  InscripcionModal =({
   onClose,
   onSubmit
 }) => {
-    if (!mostrar) return null;
+  if (!mostrar) return null;
 
-    return(
-        <div className="modal-overlay">
+  return (
+    <div className="modal-overlay">
       <div className="modal">
         <div className="modal-header">
           <h3>{modoEdicion ? "Editar Inscripción" : "Nueva Inscripción"}</h3>
@@ -128,7 +128,7 @@ const  InscripcionModal =({
         </div>
       </div>
     </div>
-    );
+  );
 
 };
 

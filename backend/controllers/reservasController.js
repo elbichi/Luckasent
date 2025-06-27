@@ -6,26 +6,52 @@ const { body } = require('express-validator');
 // Crear reserva
 exports.crearReserva = async (req, res) => {
   try {
-    const reserva = new Reserva(req.body);
+    const { usuario, cabana, fechaInicio, fechaFin, observaciones } = req.body;
+
+    // Validar IDs
+    if (!mongoose.Types.ObjectId.isValid(usuario)) {
+      return res.status(400).json({ success: false, message: 'ID de usuario inválido' });
+    }
+    if (!mongoose.Types.ObjectId.isValid(cabana)) {
+      return res.status(400).json({ success: false, message: 'ID de cabaña inválido' });
+    }
+
+    // Validar existencia
+    const usuarioExiste = await Usuario.findById(usuario);
+    if (!usuarioExiste) {
+      return res.status(404).json({ success: false, message: 'Usuario no encontrado' });
+    }
+    const cabanaExiste = await Cabana.findById(cabana);
+    if (!cabanaExiste) {
+      return res.status(404).json({ success: false, message: 'Cabaña no encontrada' });
+    }
+
+    // Crear reserva
+    const reserva = new Reserva({
+      usuario,
+      cabana,
+      fechaInicio,
+      fechaFin,
+      observaciones
+    });
     await reserva.save();
 
-    // Buscar datos del usuario para la solicitud
-    const user = await Usuario.findById(req.body.usuario);
-
+    // Crear solicitud asociada (opcional)
     const solicitud = new Solicitud({
-      solicitante: user._id,
-      responsable: user._id, // O el responsable que corresponda
-      email: user.email,
-      telefono: user.phone,
+      solicitante: usuarioExiste._id,
+      responsable: usuarioExiste._id,
+      email: usuarioExiste.email,
+      telefono: usuarioExiste.phone,
       tipoSolicitud: 'Hospedaje',
-      categoria: req.body.categoria,
-      descripcion: `Reserva de cabaña ${req.body.recurso}`,
-      estado: 'Nueva',      // Valor válido según tu enum
-      prioridad: 'Media',   // Valor válido según tu enum
+      categoria: cabanaExiste.categoria, // Guarda la categoría de la cabaña
+      descripcion: `Reserva de cabaña ${cabanaExiste.nombre}`,
+      estado: 'Nueva',
+      prioridad: 'Media',
       referencia: reserva._id
     });
     await solicitud.save();
 
+    // Enlazar la solicitud a la reserva
     reserva.solicitud = solicitud._id;
     await reserva.save();
 

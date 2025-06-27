@@ -1,8 +1,20 @@
 const Cabana = require('../models/Cabana');
 
-// CRUD básico
 exports.crearCabana = async (req, res) => {
   try {
+    const { categoria } = req.body;
+
+    // Validar que el ID de categoría sea válido
+    if (!mongoose.Types.ObjectId.isValid(categoria)) {
+      return res.status(400).json({ success: false, message: 'ID de categoría inválido' });
+    }
+
+    // Validar que la categoría exista
+    const categoriaExiste = await Categorizacion.findById(categoria);
+    if (!categoriaExiste) {
+      return res.status(404).json({ success: false, message: 'Categoría no encontrada' });
+    }
+
     const cabana = new Cabana({ ...req.body, creadoPor: req.userId });
     await cabana.save();
     res.status(201).json({ success: true, data: cabana });
@@ -10,7 +22,6 @@ exports.crearCabana = async (req, res) => {
     res.status(400).json({ success: false, message: error.message });
   }
 };
-
 exports.obtenerCabanas = async (req, res) => {
   try {
     const cabanas = await Cabana.find();

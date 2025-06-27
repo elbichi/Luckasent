@@ -30,7 +30,7 @@ exports.getEventById = async (req, res) => {
 // Crear nuevo evento
 exports.createEvent = async (req, res) => {
        try {
-        const { name, description, price, categoria, images, subCategoria, etiquetas, prioridad, observaciones, categorizadoPor, fechaCategorizacion, active } = req.body;
+        const { name, description, price, categoria, images,  etiquetas, prioridad, observaciones, categorizadoPor, fechaCategorizacion, active } = req.body;
 
         // Validar que categoria sea un ObjectId válido
         if (!mongoose.Types.ObjectId.isValid(categoria)) {
@@ -62,7 +62,6 @@ exports.createEvent = async (req, res) => {
             price,
             categoria,
             images,
-            subCategoria,
             etiquetas,
             prioridad,
             observaciones,
@@ -128,7 +127,7 @@ exports.disableEvent = async (req, res) => {
 exports.categorizarEvento = async (req, res) => {
   try {
     const { id } = req.params;
-    const { categoria, subCategoria, etiquetas } = req.body;
+    const { categoria, etiquetas } = req.body;
 
     // Validación de datos
     if (!categoria) {
@@ -143,7 +142,6 @@ exports.categorizarEvento = async (req, res) => {
       id,
       {
         categoria,
-        subCategoria,
         etiquetas,
         categorizadoPor: req.userId,
         fechaCategorizacion: new Date()

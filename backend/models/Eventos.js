@@ -23,10 +23,6 @@ const eventoSchema = new mongoose.Schema({
     ref: 'Categorizacion', // Referencia a la colección de categorías
     required: true
   },
-  subCategoria: {
-    type: String,
-    trim: true
-  },
   etiquetas: [{
     type: String,
     trim: true

@@ -7,6 +7,7 @@ const EventoModal= ({
   setEventoSeleccionado,
   nuevoEvento,
   setNuevoEvento,
+  categorias,
   onClose,
   onSubmit
     }) => {
@@ -22,6 +23,27 @@ const EventoModal= ({
           </button>
         </div>
         <div className="modal-body">
+          <div className="form-grupo">
+            <label>Categorias:</label>
+            <select
+              type="text"
+              value={modoEdicion ? eventoSeleccionado?.titulo : nuevoEvento.titulo}
+              onChange={e =>
+                modoEdicion
+                  ? setEventoSeleccionado({ ...eventoSeleccionado, titulo: e.target.value })
+                  : setNuevoEvento({ ...nuevoEvento, titulo: e.target.value })
+              }
+              placeholder="Título del evento"
+              required
+            >
+              <option value="">Seleccione...</option>
+              {categorias && categorias.map(cat => (
+                <option key={cat._id} value={cat._id}>
+                  {cat.nombre}
+                </option>
+              ))}
+             </select>
+          </div>
           <div className="form-grupo">
             <label>Título:</label>
             <input

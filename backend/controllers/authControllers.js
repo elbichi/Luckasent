@@ -36,7 +36,7 @@ exports.signup = async (req, res) =>{
       email: req.body.email.toLowerCase().trim(),
       phone: req.body.phone.trim(),
       password: req.body.password,
-      role: req.body.role || 'participante'
+      role: req.body.role || 'externo'
     });
         // Guardar usuario en la base de datos
     const savedUser = await user.save();

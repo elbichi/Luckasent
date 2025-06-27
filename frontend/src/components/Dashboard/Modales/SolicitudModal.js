@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { userService } from "../../services/ObteneruserService";
+import { userService } from "../../../services/ObteneruserService";
 
 const SolicitudModal = ({
   mostrar,

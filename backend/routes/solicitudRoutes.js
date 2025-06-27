@@ -62,6 +62,43 @@ router.get(
   solicitudController.obtenerSolicitudes
 );
 
+// Endpoint para obtener todo unificado (debe ir ANTES de '/:id')
+router.get(
+  '/unificado',
+  role.checkRole('admin', 'tesorero', 'seminarista', 'externo'),
+  async (req, res) => {
+    try {
+      const solicitudes = await Solicitud.find()
+        .populate('solicitante', 'username email')
+        .populate('categoria', 'nombre descripcion codigo')
+        .populate('responsable', 'username email')
+        .lean();
+
+      const inscripciones = await Inscripcion.find()
+        .populate('usuario', 'username email')
+        .populate('evento', 'name')
+        .populate('categoria', 'nombre descripcion codigo')
+        .lean();
+
+      const reservas = await Reserva.find()
+        .populate('cabana', 'nombre descripcion capacidad categoria estado')
+        .lean();
+
+      res.json({
+        success: true,
+        data: {
+          solicitudes,
+          inscripciones,
+          reservas
+        }
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
 // Consultar solicitud por ID (admin y tesorero)
 router.get(
   '/:id',

@@ -7,15 +7,23 @@ import { tareaService } from "../../services/tareaService";
 import { categorizacionService } from "../../services/categorizacionService";
 import { cabanaService } from "../../services/cabanaService";
 import { reservaService } from "../../services/reservaService";
-import UsuarioModal from "./UsuarioModal";
-import SolicitudModal from "./SolicitudModal";
-import EventoModal from "./EventoModal";
-import TareaModal from "./TareaModal";
-import InscripcionModal from "./InscripsionModal";
-import CabanaModal from "./CabanaModal";
-import ReservasModal from "./ReservaModal";
-
-import "./Dashboard.css"
+import UsuarioModal from "./Modales/UsuarioModal";
+import SolicitudModal from "./Modales/SolicitudModal";
+import EventoModal from "./Modales/EventoModal";
+import TareaModal from "./Modales/TareaModal";
+import InscripcionModal from "./Modales/InscripsionModal";
+import CabanaModal from "./Modales/CabanaModal";
+import ReservasModal from "./Modales/ReservaModal";
+import CategorizacionModal from "./Modales/CategorizacionModal";
+import TablaUsuarios from "./Tablas/UserTabla";
+import TablaCategorias from "./Tablas/CategorizacionTabla";
+import TablaUnificadaSolicitudes from "./Tablas/SolicitudTabla";
+import TablaInscripciones from "./Tablas/InscripcionTabla";
+import TablaEventos from "./Tablas/EventoTabla";
+import TablaTareas from "./Tablas/TareaTabla";
+import TablaCabana from './Tablas/CabanaTabla'
+import TablaReservas from './Tablas/ReservaTabla'
+import "./Dashboard.css";
 
 const Dashboard = ({ usuario, onCerrarSesion }) => {
 
@@ -39,7 +47,7 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
     email: "",
     phone: "",
     password: "",
-    role: "participante",
+    role: "externo",
   });
   //---------------------------------------------------------------------------------------------------------------
   const [solicitudes, setSolicitudes] = useState([]);
@@ -154,7 +162,7 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
       await userService.createUser(nuevoUsuario);
       alert("Usuario creado exitosamente");
       setMostrarModal(false);
-      setNuevoUsuario({ username: "", lasname: "", email: "", phone: "", password: "", role: "participante" });
+      setNuevoUsuario({ username: "", lasname: "", email: "", phone: "", password: "", role: "externo" });
       obtenerUsuarios();
     } catch (error) {
       alert(`Error al crear el usuario: ${error.message}`);
@@ -632,7 +640,72 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
       cargarCategorias();
     }
   }, [seccionActiva]);
+  const [nuevaCategoria, setNuevaCategoria] = useState({
+    nombre: "",
+    codigo: "",
+    descripcion: ""
+  });
+  const [modoEdicionCategoria, setModoEdicionCategoria] = useState(false);
+  const [categoriaSeleccionada, setCategoriaSeleccionada] = useState(null);
+  const crearCategoria = async () => {
+    try {
+      await categorizacionService.create(nuevaCategoria);
+      alert("Categoría creada exitosamente");
+      setNuevaCategoria({ nombre: "", codigo: "", descripcion: "" });
+      setMostrarModal(false);
+      obtenerCategorias();
+    } catch (error) {
+      alert(`Error al crear la categoría: ${error.message}`);
+    }
+  };
 
+  // Actualizar categoría
+  const actualizarCategoria = async () => {
+    try {
+      await categorizacionService.update(categoriaSeleccionada._id, categoriaSeleccionada);
+      alert("Categoría actualizada exitosamente");
+      setCategoriaSeleccionada(null);
+      setModoEdicionCategoria(false);
+      setMostrarModal(false);
+      obtenerCategorias();
+    } catch (error) {
+      alert(`Error al actualizar la categoría: ${error.message}`);
+    }
+  };
+
+  // Obtener categorías
+  const obtenerCategorias = async () => {
+    try {
+      const res = await categorizacionService.getAll();
+      setCategorias(res.data || []);
+    } catch (error) {
+      setCategorias([]);
+    }
+  };
+
+  // Eliminar categoría
+  const eliminarCategoria = async (id) => {
+    if (!window.confirm("¿Estás seguro de que quieres eliminar esta categoría?")) return;
+    try {
+      await categorizacionService.delete(id);
+      alert("Categoría eliminada exitosamente");
+      obtenerCategorias();
+    } catch (error) {
+      alert(`Error al eliminar la categoría: ${error.message}`);
+    }
+  };
+
+  const abrirModalCrearCategoria = () => {
+    setModoEdicionCategoria(false);
+    setNuevaCategoria({ nombre: "", codigo: "", descripcion: "" });
+    setMostrarModal(true);
+  };
+
+  const abrirModalEditarCategoria = (categoria) => {
+    setModoEdicionCategoria(true);
+    setCategoriaSeleccionada({ ...categoria });
+    setMostrarModal(true);
+  };
   //----------------------------------------------------------------------------------------------------------------
 
   // Estados para cabañas
@@ -717,7 +790,7 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
     }
   }, [seccionActiva]);
   //-----------------------------------------------------------------------------------------------------------
-// Estados para reservas
+  // Estados para reservas
   const [reservas, setReservas] = useState([]);
   const [nuevaReserva, setNuevaReserva] = useState({
     usuario: "",
@@ -815,16 +888,23 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
 
   const obtenerDatosUnificados = async () => {
     try {
-      const data = await solicitudService.getUnificado();
+      const res = await fetch("http://localhost:3000/api/solicitudes/unificado", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      if (!res.ok) throw new Error("Error al obtener datos unificados");
+      const data = await res.json();
       setDatosUnificados({
         solicitudes: data.data.solicitudes || [],
         inscripciones: data.data.inscripciones || [],
-        reservas: data.data.reservas || []
+        reservas: data.data.reservas || [],
       });
     } catch (error) {
-      alert("Error al obtener datos unificados");
+      alert("Error al obtener datos unificados: " + error.message);
     }
   };
+
 
   if (cargando) {
     return (
@@ -875,12 +955,18 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
             <div className="nav-titulo">GESTIÓN</div>
             <ul>
               <li>
+                <a href="#" onClick={() => setSeccionActiva("categorizacion")}>
+                  <span className="nav-icon">🗂️</span>
+                  <span className="nav-texto">Categorizacion</span>
+                </a>
+              </li>
+              <li>
                 <a href="#" onClick={() => setSeccionActiva("solicitudes")}>
                   <span className="nav-icon">📨</span>
                   <span className="nav-texto">Solicitudes</span>
                 </a>
               </li>
-            
+
               <li>
                 <a href="#" onClick={() => setSeccionActiva("inscripciones")}>
                   <span className="nav-icon">📝</span>
@@ -897,12 +983,6 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
                 <a href="#" onClick={() => setSeccionActiva("tareas")}>
                   <span className="nav-icon">✅</span>
                   <span className="nav-texto">Tareas</span>
-                </a>
-              </li>
-              <li>
-                <a href="#" onClick={() => setSeccionActiva("categorizacion")}>
-                  <span className="nav-icon">🗂️</span>
-                  <span className="nav-texto">Categorizacion</span>
                 </a>
               </li>
 
@@ -1023,82 +1103,28 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
           )}
 
           {seccionActiva === "usuarios" && (
-            <>
-              {/* Sección de Usuarios */}
-              <div className="seccion-usuarios">
-                <div className="seccion-header">
-                  <h2>Gestión de Usuarios</h2>
-                  <button className="btn-primary" onClick={abrirModalCrear}>
-                    ➕ Nuevo Usuario
-                  </button>
-                </div>
-
-                {/* Búsqueda */}
-                <div className="busqueda-contenedor">
-                  <input
-                    type="text"
-                    placeholder="🔍 Buscar usuarios..."
-                    value={busqueda}
-                    onChange={(e) => setBusqueda(e.target.value)}
-                    className="input-busqueda"
-                  />
-                </div>
-
-                {/* Tabla de Usuarios */}
-                <div className="tabla-contenedor">
-                  <table className="tabla-usuarios">
-                    <thead>
-                      <tr >
-                        <th>ID</th>
-                        <th>Nombre</th>
-                        <th>Apellido</th>
-                        <th>Correo</th>
-                        <th>Telefono</th>
-                        <th>Rol</th>
-                        <th>Estado</th>
-                        <th>Fecha Registro</th>
-                        <th>Acciones</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {usuariosFiltrados.map((user) => (
-                        <tr key={user.id}>
-                          <td>{user._id}</td>
-                          <td>
-                            <div className="usuario-celda">
-                              <div className="usuario-avatar-mini">{user.username?.substring(0, 2).toUpperCase()}</div>
-                              <span>{user.username}</span>
-                            </div>
-                          </td>
-                          <td>{user.lasname}</td>
-                          <td>{user.email}</td>
-                          <td>{user.phone}</td>
-                          <td>
-                            <span className={`badge-rol rol-${user.role}`}>{user.role}</span>
-                          </td>
-                          <td>
-                            <span className={`badge-estado estado-${user.status || "active"}`}>
-                              {user.status || "activo"}
-                            </span>
-                          </td>
-                          <td>{user.createdAt ? new Date(user.createdAt).toLocaleDateString() : "N/A"}</td>
-                          <td>
-                            <div className="acciones-botones">
-                              <button className="btn-editar" onClick={() => abrirModalEditar(user)}>
-                                ✏️
-                              </button>
-                              <button className="btn-eliminar" onClick={() => eliminarUsuario(user._id)}>
-                                🗑️
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+            <div className="seccion-usuarios">
+              <div className="seccion-header">
+                <h2>Gestión de Usuarios</h2>
+                <button className="btn-primary" onClick={abrirModalCrear}>
+                  ➕ Nuevo Usuario
+                </button>
               </div>
-            </>
+              <div className="busqueda-contenedor">
+                <input
+                  type="text"
+                  placeholder="🔍 Buscar usuarios..."
+                  value={busqueda}
+                  onChange={(e) => setBusqueda(e.target.value)}
+                  className="input-busqueda"
+                />
+              </div>
+              <TablaUsuarios
+                usuarios={usuariosFiltrados}
+                onEditar={abrirModalEditar}
+                onEliminar={eliminarUsuario}
+              />
+            </div>
           )}
           {seccionActiva === "configuracion" && (
             <div className="seccion-configuracion">
@@ -1114,66 +1140,18 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
                   ➕ Nuevo Solicitud
                 </button>
               </div>
-              <div className="tabla-contenedor">
-                <table className="tabla-usuarios">
-                  <thead>
-                    <tr>
-                      <th>Solicitante</th>
-                      <th>Correo</th>
-                      <th>Teléfono</th>
-                      <th>Tipo de Solicitud</th>
-                      <th>Categoría</th>
-                      <th>Descripción</th>
-                      <th>Estado</th>
-                      <th>Prioridad</th>
-                      <th>Observaciones</th>
-                      <th>Fecha Solicitud</th>
-                      <th>Responsable</th>
-                      <th>Modificado Por</th>
-                      <th>Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {solicitudes.map((sol) => (
-                      <tr key={sol._id}>
-                        <td>
-
-                          {sol.solicitante?.username || sol.solicitante || "N/A"}
-
-                        </td>
-                        <td>
-                          {/* Si solicitante es objeto, muestra el email, si no, el campo email */}
-                          {sol.solicitante?.email || sol.email || "N/A"}
-                        </td>
-                        <td>{sol.telefono || "N/A"}</td>
-                        <td>{sol.tipoSolicitud || "N/A"}</td>
-                        <td>
-                          {/* Si categoria es objeto, muestra el nombre, si no, el valor */}
-                          {sol.categoria?.nombre || sol.categoria || "N/A"}
-                        </td>
-                        <td>{sol.descripcion || "N/A"}</td>
-                        <td>{sol.estado || "N/A"}</td>
-                        <td>{sol.prioridad || "N/A"}</td>
-                        <td>{sol.observaciones || "N/A"}</td>
-                        <td>{sol.fechaSolicitud ? new Date(sol.fechaSolicitud).toLocaleDateString() : "N/A"}</td>
-                        <td>
-                          {/* Si responsable es objeto, muestra el nombre, si no, el valor */}
-                          {sol.responsable?.username || sol.responsable || "N/A"}
-
-                        </td>
-                        <td>{sol.modificadoPor || "N/A"}</td>
-                        <td>
-                          <button className="btn-editar" onClick={() => abrirModalEditarSolicitud(sol)}>✏️</button>
-                          <button className="btn-eliminar" onClick={() => eliminarSolicitud(sol._id)}>🗑️</button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <TablaUnificadaSolicitudes
+                datosUnificados={datosUnificados}
+                abrirModalEditarSolicitud={abrirModalEditarSolicitud}
+                eliminarSolicitud={eliminarSolicitud}
+                abrirModalEditarInscripcion={abrirModalEditarInscripcion}
+                eliminarInscripcion={eliminarInscripcion}
+                abrirModalEditarReserva={abrirModalEditarReserva}
+                eliminarReserva={eliminarReserva}
+              />
             </div>
           )}
-          
+
           {seccionActiva === "inscripciones" && (
             <div className="seccion-usuarios">
               <div className="seccion-header">
@@ -1182,45 +1160,14 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
                   ➕ Nueva Inscripción
                 </button>
               </div>
-              <div className="tabla-contenedor">
-                <table className="tabla-usuarios">
-                  <thead>
-                    <tr>
-                      <th>ID Inscripción</th>
-                      <th>Nombre</th>
-                      <th>Email</th>
-                      <th>Evento</th>
-                      <th>Categoría</th>
-                      <th>Estado</th>
-                      <th>Observaciones</th>
-                      <th>Fecha Inscripción</th>
-                      <th>Solicitud</th>
-                      <th>Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {inscripciones.map((ins) => (
-                      <tr key={ins._id}>
-                        <td>{ins._id}</td>
-                        <td>{ins.usuario?.username || "N/A"}</td>
-                        <td>{ins.usuario?.email || "N/A"}</td>
-                        <td>{ins.evento?.nombre || "N/A"}</td>
-                        <td>{ins.categoria?.nombre || "N/A"}</td>
-                        <td>{ins.estado || "N/A"}</td>
-                        <td>{ins.observaciones || ""}</td>
-                        <td>{ins.createdAt ? new Date(ins.createdAt).toLocaleDateString() : ""}</td>
-                        <td>{ins.solicitud?._id || ins.solicitud || ""}</td>
-                        <td>
-                          <button className="btn-editar" onClick={() => abrirModalEditarInscripcion(ins)}>✏️</button>
-                          <button className="btn-eliminar" onClick={() => eliminarInscripcion(ins._id)}>🗑️</button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <TablaInscripciones
+                inscripciones={inscripciones}
+                onEditar={abrirModalEditarInscripcion}
+                onEliminar={eliminarInscripcion}
+              />
             </div>
           )}
+
           {seccionActiva === "eventos" && (
             <div className="seccion-usuarios">
               <div className="seccion-header">
@@ -1229,113 +1176,27 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
                   ➕ Nuevo Evento
                 </button>
               </div>
-
-              <div className="tabla-contenedor">
-                <table className="tabla-usuarios">
-                  <thead>
-                    <tr>
-                      <th>ID</th>
-                      <th>Nombre</th>
-                      <th>Descripción</th>
-                      <th>Precio</th>
-                      <th>Categoría</th>
-                      <th>SubCategoría</th>
-                      <th>Prioridad</th>
-                      <th>Estado</th>
-                      <th>Etiquetas</th>
-                      <th>Fecha Creación</th>
-                      <th>Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {eventos.map((evento) => (
-                      <tr key={evento._id}>
-                        <td>{evento._id}</td>
-                        <td>{evento.name}</td>
-                        <td>{evento.description?.substring(0, 50)}...</td>
-                        <td>${evento.price?.toLocaleString()}</td>
-                        <td>{evento.categoria?.nombre || "Sin categoría"}</td>
-                        <td>{evento.subCategoria || "N/A"}</td>
-                        <td>
-                          <span className={`badge-prioridad prioridad-${evento.prioridad?.toLowerCase()}`}>
-                            {evento.prioridad}
-                          </span>
-                        </td>
-                        <td>
-                          <span className={`badge-estado estado-${evento.active ? "activo" : "inactivo"}`}>
-                            {evento.active ? "Activo" : "Inactivo"}
-                          </span>
-                        </td>
-                        <td>
-                          {evento.etiquetas?.slice(0, 2).join(", ")}
-                          {evento.etiquetas?.length > 2 && "..."}
-                        </td>
-                        <td>{evento.createdAt ? new Date(evento.createdAt).toLocaleDateString() : "N/A"}</td>
-                        <td>
-                          <div className="acciones-botones">
-                            <button className="btn-editar" onClick={() => abrirModalEditarEvento(evento)}>
-                              ✏️
-                            </button>
-                            <button className="btn-warning" onClick={() => deshabilitarEvento(evento._id)}>
-                              ⏸️
-                            </button>
-                            <button className="btn-eliminar" onClick={() => eliminarEvento(evento._id)}>
-                              🗑️
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <TablaEventos
+                eventos={eventos}
+                onEditar={abrirModalEditarEvento}
+                onEliminar={eliminarEvento}
+                onDeshabilitar={deshabilitarEvento}
+              />
             </div>
           )}
           {seccionActiva === "categorizacion" && (
-            <div className="seccion-usuarios">
+            <div className="seccion-categorias">
               <div className="seccion-header">
-                <h2>Gestión de categorizacion</h2>
-                <button className="btn-primary">
-                  ➕ Nuevo Categoria
+                <h2>Categorización</h2>
+                <button className="btn-primary" onClick={abrirModalCrearCategoria}>
+                  ➕ Nueva Categoría
                 </button>
               </div>
-
-              <div className="tabla-contenedor">
-                <table className="tabla-usuarios">
-                  <thead>
-                    <tr>
-                      <th>ID</th>
-                      <th>Nombre</th>
-                      <th>Codigo</th>
-                      <th>Descripción</th>
-                      <th>Fecha Creación</th>
-                      <th>Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {categorias.length === 0 ? (
-                      <tr>
-                        <td colSpan="6">No hay categorías registradas</td>
-                      </tr>
-                    ) : (
-                      categorias.map(cat => (
-                        <tr key={cat._id}>
-                          <td>{cat._id}</td>
-                          <td>{cat.nombre}</td>
-                          <td>{cat.codigo}</td>
-                          <td>{cat.descripcion}</td>
-                          <td>{cat.createdAt ? new Date(cat.createdAt).toLocaleDateString() : "N/A"}</td>
-                          <td>
-                            {/* Aquí puedes poner botones de editar/eliminar si lo deseas */}
-                            <button className="btn-editar">✏️</button>
-                            <button className="btn-eliminar">🗑️</button>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
+              <TablaCategorias
+                categorias={categorias}
+                onEditar={abrirModalEditarCategoria}
+                onEliminar={eliminarCategoria}
+              />
             </div>
           )}
           {seccionActiva === "tareas" && (
@@ -1346,118 +1207,27 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
                   ➕ Nueva Tarea
                 </button>
               </div>
-
-              <div className="tabla-contenedor">
-                <table className="tabla-usuarios">
-                  <thead>
-                    <tr>
-                      <th>ID</th>
-                      <th>Título</th>
-                      <th>Descripción</th>
-                      <th>Estado</th>
-                      <th>Prioridad</th>
-                      <th>Asignado A</th>
-                      <th>Asignado Por</th>
-                      <th>Fecha Límite</th>
-                      <th>Fecha Creación</th>
-                      <th>Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {tareas.map((tarea) => (
-                      <tr key={tarea._id}>
-                        <td>{tarea._id}</td>
-                        <td>{tarea.titulo}</td>
-                        <td>{tarea.descripcion?.substring(0, 50)}...</td>
-                        <td>
-                          <select
-                            value={tarea.estado}
-                            onChange={(e) => cambiarEstadoTarea(tarea._id, e.target.value)}
-                            className={`badge-estado estado-${tarea.estado?.replace(' ', '-')}`}
-                          >
-                            <option value="pendiente">Pendiente</option>
-                            <option value="en progreso">En Progreso</option>
-                            <option value="completada">Completada</option>
-                            <option value="cancelada">Cancelada</option>
-                          </select>
-                        </td>
-                        <td>
-                          <span className={`badge-prioridad prioridad-${tarea.prioridad}`}>
-                            {tarea.prioridad?.charAt(0).toUpperCase() + tarea.prioridad?.slice(1)}
-                          </span>
-                        </td>
-                        <td>{tarea.asignadoA?.username || "N/A"}</td>
-                        <td>{tarea.asignadoPor?.username || "N/A"}</td>
-                        <td>
-                          {tarea.fechaLimite ? new Date(tarea.fechaLimite).toLocaleDateString() : "N/A"}
-                        </td>
-                        <td>
-                          {tarea.createdAt ? new Date(tarea.createdAt).toLocaleDateString() : "N/A"}
-                        </td>
-                        <td>
-                          <div className="acciones-botones">
-                            <button className="btn-editar" onClick={() => abrirModalEditarTarea(tarea)}>
-                              ✏️
-                            </button>
-                            <button className="btn-eliminar" onClick={() => eliminarTarea(tarea._id)}>
-                              🗑️
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <TablaTareas
+                tareas={tareas}
+                onEditar={abrirModalEditarTarea}
+                onEliminar={eliminarTarea}
+                onCambiarEstado={cambiarEstadoTarea}
+              />
             </div>
           )}
           {seccionActiva === "cabanas" && (
             <div className="seccion-usuarios">
               <div className="seccion-header">
                 <h2>Gestión de Cabañas</h2>
-                <button className="btn-primary" onClick={abrirModalCrearTarea}>
+                <button className="btn-primary" onClick={abrirModalCrearCabana}>
                   ➕ Nueva Cabaña
                 </button>
               </div>
-
-              <div className="tabla-contenedor">
-                <table className="tabla-usuarios">
-                  <thead>
-                    <tr>
-                      <th>ID</th>
-                      <th>Título</th>
-                      <th>Descripción</th>
-                      <th>Estado</th>
-                      <th>Prioridad</th>
-                      <th>Asignado A</th>
-                      <th>Asignado Por</th>
-                      <th>Fecha Límite</th>
-                      <th>Fecha Creación</th>
-                      <th>Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {cabanas.map((cabana) => (
-                      <tr key={cabana._id}>
-                        <td>{cabana._id}</td>
-                        <td>{cabana.nombre}</td>
-                        <td>{cabana.descripcion}</td>
-                        <td>{cabana.capacidad}</td>
-                        <td>{cabana.categoria?.nombre || cabana.categoria || "N/A"}</td>
-                        <td>{cabana.estado}</td>
-                        <td>
-                          <button className="btn-editar" onClick={() => abrirModalEditarCabana(cabana)}>
-                            ✏️
-                          </button>
-                          <button className="btn-eliminar" onClick={() => eliminarCabana(cabana._id)}>
-                            🗑️
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <TablaCabana
+                cabanas={cabanas}
+                onEditar={abrirModalEditarCabana}
+                onEliminar={eliminarCabana}
+              />
             </div>
           )}
           {seccionActiva === "reservas" && (
@@ -1468,49 +1238,26 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
                   ➕ Nueva Reserva
                 </button>
               </div>
-
-              <div className="tabla-contenedor">
-                <table className="tabla-usuarios">
-                  <thead>
-                    <tr>
-                      <th>ID</th>
-                      <th>Usuario</th>
-                      <th>Recurso</th>
-                      <th>Fecha Inicio</th>
-                      <th>Fecha Fin</th>
-                      <th>Categoría</th>
-                      <th>Observaciones</th>
-                      <th>Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {reservas.map((reserva) => (
-                      <tr key={reserva._id}>
-                        <td>{reserva._id}</td>
-                        <td>{reserva.usuario?.username || reserva.usuario || "N/A"}</td>
-                        <td>{reserva.recurso?.nombre || reserva.recurso || "N/A"}</td>
-                        <td>{reserva.fechaInicio ? new Date(reserva.fechaInicio).toLocaleDateString() : ""}</td>
-                        <td>{reserva.fechaFin ? new Date(reserva.fechaFin).toLocaleDateString() : ""}</td>
-                        <td>{reserva.categoria?.nombre || reserva.categoria || "N/A"}</td>
-                        <td>{reserva.observaciones}</td>
-                        <td>
-                          <button className="btn-editar" onClick={() => abrirModalEditarReserva(reserva)}>
-                            ✏️
-                          </button>
-                          <button className="btn-eliminar" onClick={() => eliminarReserva(reserva._id)}>
-                            🗑️
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <TablaReservas
+                reservas={reservas}
+                onEditar={abrirModalEditarReserva}
+                onEliminar={eliminarReserva}
+              />
             </div>
           )}
         </main>
       </div>
+      <CategorizacionModal
+        mostrar={mostrarModal && seccionActiva === "categorizacion"}
+        modoEdicion={modoEdicionCategoria}
+        categoriaSeleccionada={categoriaSeleccionada}
+        setCategoriaSeleccionada={setCategoriaSeleccionada}
+        nuevaCategoria={nuevaCategoria}
+        setNuevaCategoria={setNuevaCategoria}
+        onClose={() => setMostrarModal(false)}
 
+        onSubmit={modoEdicionCategoria ? actualizarCategoria : crearCategoria}
+      />
       <UsuarioModal
         mostrar={mostrarModal && seccionActiva === "usuarios"}
         modoEdicion={modoEdicion}
@@ -1539,6 +1286,7 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
         setEventoSeleccionado={setEventoSeleccionado}
         nuevoEvento={nuevoEvento}
         setNuevoEvento={setNuevoEvento}
+        categorias={categorias}
         onClose={() => setMostrarModal(false)}
         onSubmit={modoEdicionEvento ? actualizarEvento : crearEvento}
       />
@@ -1567,30 +1315,30 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
         onSubmit={crearOActualizarInscripcion}
       />
 
-    <CabanaModal
-      mostrar={mostrarModal && seccionActiva === "cabanas"}
-      modoEdicion={modoEdicionCabana}
-      cabanaSeleccionada={cabanaSeleccionada}
-      setCabanaSeleccionada={setCabanaSeleccionada}
-      nuevaCabana={nuevaCabana}
-      setNuevaCabana={setNuevaCabana}
-      onClose={() => setMostrarModal(false)}
-      onSubmit={modoEdicionCabana ? actualizarCabana : crearCabana}
-    />
+      <CabanaModal
+        mostrar={mostrarModal && seccionActiva === "cabanas"}
+        modoEdicion={modoEdicionCabana}
+        cabanaSeleccionada={cabanaSeleccionada}
+        setCabanaSeleccionada={setCabanaSeleccionada}
+        nuevaCabana={nuevaCabana}
+        setNuevaCabana={setNuevaCabana}
+        onClose={() => setMostrarModal(false)}
+        onSubmit={modoEdicionCabana ? actualizarCabana : crearCabana}
+      />
 
-    <ReservasModal
-      mostrar={mostrarModal && seccionActiva === "reservas"}
-      modoEdicion={modoEdicionReserva}
-      reservaSeleccionada={reservaSeleccionada}
-      setReservaSeleccionada={setReservaSeleccionada}
-      nuevaReserva={nuevaReserva}
-      setNuevaReserva={setNuevaReserva}
-      usuarios={usuarios}
-      cabanas={cabanas}
-      categorias={categorias}
-      onClose={() => setMostrarModal(false)}
-      onSubmit={modoEdicionReserva ? actualizarReserva : crearReserva}
-/>
+      <ReservasModal
+        mostrar={mostrarModal && seccionActiva === "reservas"}
+        modoEdicion={modoEdicionReserva}
+        reservaSeleccionada={reservaSeleccionada}
+        setReservaSeleccionada={setReservaSeleccionada}
+        nuevaReserva={nuevaReserva}
+        setNuevaReserva={setNuevaReserva}
+        usuarios={usuarios}
+        cabanas={cabanas}
+        categorias={categorias}
+        onClose={() => setMostrarModal(false)}
+        onSubmit={modoEdicionReserva ? actualizarReserva : crearReserva}
+      />
     </div>
   )
 }

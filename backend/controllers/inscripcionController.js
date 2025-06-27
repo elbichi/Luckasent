@@ -5,6 +5,33 @@ const Usuario = require('../models/User');
 // Crear inscripción
 exports.crearInscripcion = async (req, res) => {
   try {
+    const { usuario, evento, categoria } = req.body;
+
+    // 1. Validar que los IDs sean ObjectId válidos
+    if (!mongoose.Types.ObjectId.isValid(usuario)) {
+      return res.status(400).json({ success: false, message: 'ID de usuario inválido' });
+    }
+    if (!mongoose.Types.ObjectId.isValid(evento)) {
+      return res.status(400).json({ success: false, message: 'ID de evento inválido' });
+    }
+    if (!mongoose.Types.ObjectId.isValid(categoria)) {
+      return res.status(400).json({ success: false, message: 'ID de categoría inválido' });
+    }
+
+    // 2. Validar que existan en la base de datos
+    const usuarioExiste = await Usuario.findById(usuario);
+    if (!usuarioExiste) {
+      return res.status(404).json({ success: false, message: 'Usuario no encontrado' });
+    }
+    const eventoExiste = await Evento.findById(evento);
+    if (!eventoExiste) {
+      return res.status(404).json({ success: false, message: 'Evento no encontrado' });
+    }
+    const categoriaExiste = await Categorizacion.findById(categoria);
+    if (!categoriaExiste) {
+      return res.status(404).json({ success: false, message: 'Categoría no encontrada' });
+    }
+
     // 1. Crear la inscripción
     const inscripcion = new Inscripcion(req.body);
     await inscripcion.save();

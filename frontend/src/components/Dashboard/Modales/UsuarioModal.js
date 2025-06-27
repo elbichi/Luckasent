@@ -105,9 +105,7 @@ const UsuarioModal = ({
             >
               <option value="admin">Admin</option>
               <option value="tesorero">Tesorero</option>
-              <option value="participante">Participante</option>
               <option value="seminarista">Seminarista</option>
-              <option value="logistico">Logístico</option>
               <option value="externo">Externo</option>
             </select>
           </div>
