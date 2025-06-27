@@ -11,8 +11,8 @@ function App() {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/signup/registro" element={<Registro />} />
-        <Route path="/admin/users"element={<Dashboard />} />
-    
+        <Route path="/admin/users" element={<Dashboard />} />
+        <Route path="/external" element={<div><h1>External User Dashboard</h1><p>Welcome external user! This interface is for external users.</p></div>} />
       </Routes>
     </Router>
   );
