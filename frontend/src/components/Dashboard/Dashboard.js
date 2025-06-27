@@ -21,8 +21,9 @@ import TablaUnificadaSolicitudes from "./Tablas/SolicitudTabla";
 import TablaInscripciones from "./Tablas/InscripcionTabla";
 import TablaEventos from "./Tablas/EventoTabla";
 import TablaTareas from "./Tablas/TareaTabla";
-import TablaCabana from './Tablas/CabanaTabla'
-import TablaReservas from './Tablas/ReservaTabla'
+import TablaCabana from './Tablas/CabanaTabla';
+import TablaReservas from './Tablas/ReservaTabla';
+import Reportes from "../Reportes/Reportes";
 import "./Dashboard.css";
 
 const Dashboard = ({ usuario, onCerrarSesion }) => {
@@ -1245,6 +1246,13 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
               />
             </div>
           )}
+
+          {seccionActiva === "reportes" && (
+            <div className="seccion-reportes">
+              <Reportes />
+            </div>
+          )}
+
         </main>
       </div>
       <CategorizacionModal

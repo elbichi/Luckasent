@@ -1,7 +1,8 @@
+const mongoose = require('mongoose');
 const Reserva = require('../models/Reservas');
 const Solicitud = require('../models/Solicitud');
 const Usuario = require('../models/User');
-const { body } = require('express-validator');
+const Cabana = require('../models/Cabana');
 
 // Crear reserva
 exports.crearReserva = async (req, res) => {
@@ -66,7 +67,7 @@ exports.obtenerReservas = async (req, res) => {
   try {
     const reservas = await Reserva.find()
       .populate('usuario', 'username email')
-      .populate('categoria', 'nombre descripcion codigo'); // <-- aquí
+      .populate('cabana', 'nombre descripcion capacidad categoria estado');
     res.json({ success: true, data: reservas });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -78,7 +79,7 @@ exports.obtenerReservaPorId = async (req, res) => {
   try {
     const reserva = await Reserva.findById(req.params.id)
       .populate('usuario', 'username email')
-      .populate('categoria', 'nombre descripcion codigo'); // <-- aquí
+      .populate('cabana', 'nombre descripcion capacidad categoria estado');
     if (!reserva) return res.status(404).json({ success: false, message: 'Reserva no encontrada' });
     res.json({ success: true, data: reserva });
   } catch (error) {

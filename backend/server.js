@@ -14,7 +14,8 @@ const tareaRoutes = require('./routes/tareaRoutes');
 const categotizacionRoutes = require('./routes/categorizacionRoutes');
 const reservasRoutes = require('./routes/reservasRoutes'); 
 const cabanasRoutes = require('./routes/cabanasRoutes'); // Asegúrate de que esta ruta exista
-const inscripcionesRoutes = require('./routes/inscripcionRoutes'); // Asegúrate de que esta ruta exista
+const inscripcionesRoutes = require('./routes/inscripcionRoutes');
+const ReportesRoutes= require ('./routes/reportesRoutes')// Asegúrate de que esta ruta exista
 // Primero declaramos app
 const app = express();
 
@@ -46,7 +47,7 @@ app.use('/api/tareas', tareaRoutes);
 app.use('/api/categorizacion', categotizacionRoutes);
 app.use('/api/reservas', reservasRoutes); // Asegúrate de que esta ruta exista
 app.use('/api/inscripciones', inscripcionesRoutes); // Asegúrate de que esta ruta exista
-
+app.use('/api/reportes', ReportesRoutes);
 
 
 

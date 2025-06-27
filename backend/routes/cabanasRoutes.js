@@ -1,22 +1,24 @@
 const express = require('express');
 const router = express.Router();
-const cabanasController = require('../controllers/cabanasController')
-const { authJwt, role } = require('../middlewares');
+const { 
+  crearCabana, 
+  obtenerCabanas,
+  obtenerCabanaPorId,
+  actualizarCabana,
+  eliminarCabana,
+  categorizarCabana 
+} = require('../controllers/cabanasController');
+const { authJwt } = require('../middlewares');
 
-// Solo autenticados pueden acceder
+// Middleware de autenticación
 router.use(authJwt.verifyToken);
 
-
-const allowedRoles = ['admin', 'tesorero', 'seminarista', 'externo'];
-
-// CRUD
-router.post('/', role.checkRole(...allowedRoles), cabanasController.crearCabana);
-router.get('/', role.checkRole(...allowedRoles), cabanasController.obtenerCabanas);
-router.get('/:id',role.checkRole(...allowedRoles), cabanasController.obtenerCabanaPorId);
-router.put('/:id', role.checkRole(...allowedRoles), cabanasController.actualizarCabana);
-router.delete('/:id', role.checkRole(...allowedRoles), cabanasController.eliminarCabana);
-
-// Categorizar cabaña
-router.patch('/:id/categorizar', role.checkRole(...allowedRoles), cabanasController.categorizarCabana);
+// Rutas
+router.post('/', crearCabana);
+router.get('/', obtenerCabanas);
+router.get('/:id', obtenerCabanaPorId);
+router.put('/:id', actualizarCabana);
+router.delete('/:id', eliminarCabana);
+router.put('/:id/categorizar', categorizarCabana);
 
 module.exports = router;

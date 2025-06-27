@@ -1,5 +1,8 @@
+const mongoose = require('mongoose');
 const Cabana = require('../models/Cabana');
+const Categorizacion = require('../models/categorizacion');
 
+// CRUD básico
 exports.crearCabana = async (req, res) => {
   try {
     const { categoria } = req.body;
@@ -22,6 +25,7 @@ exports.crearCabana = async (req, res) => {
     res.status(400).json({ success: false, message: error.message });
   }
 };
+
 exports.obtenerCabanas = async (req, res) => {
   try {
     const cabanas = await Cabana.find();
