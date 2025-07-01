@@ -43,25 +43,29 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
     nuevosHoy: 0,
   });
   const [nuevoUsuario, setNuevoUsuario] = useState({
-    username: "",
-    lasname: "",
-    email: "",
-    phone: "",
+    nombre: "",
+    apellido: "",
+    correo: "",
+    telefono: "",
+    tipoDocumento: "",
+    numeroDocumento: "",
     password: "",
     role: "externo",
+    estado: "activo"
   });
   //---------------------------------------------------------------------------------------------------------------
   const [solicitudes, setSolicitudes] = useState([]);
   const [nuevaSolicitud, setNuevaSolicitud] = useState({
-    solicitante: "",
-    email: "",
-    telefono: "",
-    tipoSolicitud: "",
-    categoria: "",
-    descripcion: "",
-    prioridad: "Media",
-    responsable: "",
-    observaciones: ""
+        solicitante: "",
+        correo: "",
+        telefono: "",
+        tipoSolicitud: "",
+        categoria: "",
+        descripcion: "",
+        estado: "Nuevo",
+        prioridad: "Media",
+        responsable: "",
+        observaciones: ""
   });
   const [modoEdicionSolicitud, setModoEdicionSolicitud] = useState(false);
   const [solicitudSeleccionada, setSolicitudSeleccionada] = useState(null);
@@ -70,42 +74,39 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
   const [modoEdicionInscripcion, setModoEdicionInscripcion] = useState(false);
   const [inscripcionSeleccionada, setInscripcionSeleccionada] = useState(null);
   const [nuevaInscripcion, setNuevaInscripcion] = useState({
-    usuario: "",
-    evento: "",
-    categoria: "",
-    estado: "pendiente",
-    observaciones: ""
-  });
-  const [inscripciones, setInscripciones] = useState([]);
-  // Función para abrir el modal de inscripción
-  const abrirModalInscripcion = () => {
-    setModoEdicionInscripcion(false);
-    setNuevaInscripcion({
-      usuario: "",
-      evento: "",
-      categoria: "",
-      estado: "pendiente",
-      observaciones: ""
-    });
-    setMostrarModalInscripcion(true);
-  };
-
-  // Función para crear o actualizar inscripción (ajusta según tu lógica)
-  const crearOActualizarInscripcion = () => {
-    // Aquí va tu lógica para crear o actualizar la inscripción
-    setMostrarModalInscripcion(false);
-  };
+  usuario: "",
+  nombre: "",
+  apellido: "",
+  tipoDocumento: "",
+  numeroDocumento: "",
+  correo: "",
+  telefono: "",
+  edad: "",
+  evento: "",
+  categoria: "",
+  estado: "pendiente",
+  observaciones: "",
+  solicitud: ""
+});
   //----------------------------------------------------------------------------------------------------------
   // Estados para eventos
   const [eventos, setEventos] = useState([]);
   const [nuevoEvento, setNuevoEvento] = useState({
-    name: "",
-    description: "",
-    price: 0,
+    nombre: "",
+    descripcion: "",
+    imagen: "",
+    precio: 0,
     categoria: "",
-    subCategoria: "",
     etiquetas: [],
-    images: "",
+    fechaEvento: "",
+    horaInicio: "",
+    horaFin: "",
+    lugar: "",
+    direccion: "",
+    duracionDias: 1,
+    cuposTotales: 0,
+    cuposDisponibles: 0,
+    programa: [],
     prioridad: "Normal",
     observaciones: "",
     active: true
@@ -163,7 +164,17 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
       await userService.createUser(nuevoUsuario);
       alert("Usuario creado exitosamente");
       setMostrarModal(false);
-      setNuevoUsuario({ username: "", lasname: "", email: "", phone: "", password: "", role: "externo" });
+      setNuevoUsuario({
+        nombre: "",
+        apellido: "",
+        correo: "",
+        telefono: "",
+        tipoDocumento: "",
+        numeroDocumento: "",
+        password: "",
+        role: "externo",
+        estado: "activo"
+      });
       obtenerUsuarios();
     } catch (error) {
       alert(`Error al crear el usuario: ${error.message}`);
@@ -174,12 +185,14 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
   const actualizarUsuario = async () => {
     try {
       await userService.updateUser(usuarioSeleccionado._id, {
-        username: usuarioSeleccionado.username,
-        lasname: usuarioSeleccionado.lasname,
-        email: usuarioSeleccionado.email,
-        phone: usuarioSeleccionado.phone,
+        nombre: usuarioSeleccionado.nombre,
+        apellido: usuarioSeleccionado.apellido,
+        correo: usuarioSeleccionado.correo,
+        telefono: usuarioSeleccionado.telefono,
+        tipoDocumento: usuarioSeleccionado.tipoDocumento,
+        numeroDocumento: usuarioSeleccionado.numeroDocumento,
         role: usuarioSeleccionado.role,
-        status: usuarioSeleccionado.status,
+        estado: usuarioSeleccionado.estado,
       });
       alert("Usuario actualizado exitosamente");
       setMostrarModal(false);
@@ -214,7 +227,7 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
   // Abrir modal para crear usuario
   const abrirModalCrear = () => {
     setModoEdicion(false);
-    setNuevoUsuario({ username: "", lasname: "", email: "", phone: "", password: "", role: "participante" });
+    setNuevoUsuario({ nombre: "", apellido: "", correo: "", telefono: "", password: "", role: "participante" });
     setMostrarModal(true);
   };
 
@@ -234,8 +247,8 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
   const usuariosFiltrados = Array.isArray(usuarios)
     ? usuarios.filter(
       (user) =>
-        user.username?.toLowerCase().includes(busqueda.toLowerCase()) ||
-        user.email?.toLowerCase().includes(busqueda.toLowerCase()) ||
+        user.nombre?.toLowerCase().includes(busqueda.toLowerCase()) ||
+        user.correo?.toLowerCase().includes(busqueda.toLowerCase()) ||
         user.role?.toLowerCase().includes(busqueda.toLowerCase())
     )
     : [];
@@ -259,11 +272,12 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
       setMostrarModal(false);
       setNuevaSolicitud({
         solicitante: "",
-        email: "",
+        correo: "",
         telefono: "",
         tipoSolicitud: "",
         categoria: "",
         descripcion: "",
+        estado: "Nuevo",
         prioridad: "Media",
         responsable: "",
         observaciones: ""
@@ -305,7 +319,7 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
     setModoEdicionSolicitud(false);
     setNuevaSolicitud({
       solicitante: "",
-      email: "",
+      correo: "",
       telefono: "",
       tipoSolicitud: "",
       categoria: "",
@@ -345,12 +359,38 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
   };
 
   // Crear inscripción
-  const crearInscripcion = async () => {
+  const CrearInscripcion = async () => {
+    // Validación previa
+  if (
+    !nuevaInscripcion.usuario ||
+    nuevaInscripcion.usuario.length !== 24 ||
+    !nuevaInscripcion.evento ||
+    nuevaInscripcion.evento.length !== 24 ||
+    !nuevaInscripcion.categoria ||
+    nuevaInscripcion.categoria.length !== 24
+  ) {
+    alert("Debes seleccionar usuario, evento y categoría válidos.");
+    return;
+  }
     try {
       await inscripcionService.create(nuevaInscripcion);
       alert("Inscripción creada exitosamente");
       setMostrarModal(false);
-      setNuevaInscripcion({ usuario: "", evento: "", categoria: "", observaciones: "" });
+      setNuevaInscripcion({
+        usuario: "",
+        nombre: "",
+        apellido: "",
+        tipoDocumento: "",
+        numeroDocumento: "",
+        correo: "",
+        telefono: "",
+        edad: "",
+        evento: "",
+        categoria: "",
+        estado: "pendiente",
+        observaciones: "",
+        solicitud: ""
+      });
       obtenerInscripciones();
     } catch (error) {
       alert(`Error al crear la inscripción: ${error.message}`);
@@ -387,11 +427,19 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
   const abrirModalCrearInscripcion = () => {
     setModoEdicionInscripcion(false);
     setNuevaInscripcion({
-      usuario: "",
+     usuario: "",
+      nombre: "",
+      apellido: "",
+      tipoDocumento: "",
+      numeroDocumento: "",
+      correo: "",
+      telefono: "",
+      edad: "",
       evento: "",
       categoria: "",
       estado: "pendiente",
-      observaciones: ""
+      observaciones: "",
+      solicitud: ""
     });
     setMostrarModalInscripcion(true); // <-- CORRECTO
   };
@@ -402,7 +450,12 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
     setInscripcionSeleccionada({ ...inscripcion });
     setMostrarModal(true);
   };
-
+  const [inscripciones, setInscripciones] = useState([]);
+  // Función para crear o actualizar inscripción (ajusta según tu lógica)
+  const crearOActualizarInscripcion = () => {
+    // Aquí va tu lógica para crear o actualizar la inscripción
+    setMostrarModalInscripcion(false);
+  };
   useEffect(() => {
     if (seccionActiva === "inscripciones") {
       obtenerInscripciones();
@@ -429,20 +482,28 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
       alert("Evento creado exitosamente");
       setMostrarModal(false);
       setNuevoEvento({
-        name: "",
-        description: "",
-        price: 0,
+        nombre: "",
+        descripcion: "",
+        imagen: "",
+        precio: 0,
         categoria: "",
-        subCategoria: "",
         etiquetas: [],
-        images: "",
+        fechaEvento: "",
+        horaInicio: "",
+        horaFin: "",
+        lugar: "",
+        direccion: "",
+        duracionDias: 1,
+        cuposTotales: 0,
+        cuposDisponibles: 0,
+        programa: [],
         prioridad: "Normal",
         observaciones: "",
         active: true
       });
       obtenerEventos();
     } catch (error) {
-      alert(`Error al crear el evento: ${error.message}`);
+      alert(`Error al crear el evento:s ${error.message}`);
     }
   };
 
@@ -488,13 +549,21 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
   const abrirModalCrearEvento = () => {
     setModoEdicionEvento(false);
     setNuevoEvento({
-      name: "",
-      description: "",
-      price: 0,
+      nombre: "",
+      descripcion: "",
+      imagen: "",
+      precio: 0,
       categoria: "",
-      subCategoria: "",
       etiquetas: [],
-      images: "",
+      fechaEvento: "",
+      horaInicio: "",
+      horaFin: "",
+      lugar: "",
+      direccion: "",
+      duracionDias: 1,
+      cuposTotales: 0,
+      cuposDisponibles: 0,
+      programa: [],
       prioridad: "Normal",
       observaciones: "",
       active: true
@@ -1032,8 +1101,8 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
 
             </div>
             <div className="usuario-info">
-              <div className="usuario-avatar">{usuario?.username?.substring(0, 2).toUpperCase()}</div>
-              <span className="usuario-nombre">{usuario?.username}</span>
+              <div className="usuario-avatar">{usuario?.nombre?.substring(0, 2).toUpperCase()}</div>
+              <span className="usuario-nombre">{usuario?.nombre}</span>
               <button className="btn-logout" onClick={handleLogout}>
                 Cerrar sesión
               </button>
@@ -1142,13 +1211,9 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
                 </button>
               </div>
               <TablaUnificadaSolicitudes
-                datosUnificados={datosUnificados}
+                datosUnificados={{ solicitudes, inscripciones: [], reservas: [] }}
                 abrirModalEditarSolicitud={abrirModalEditarSolicitud}
                 eliminarSolicitud={eliminarSolicitud}
-                abrirModalEditarInscripcion={abrirModalEditarInscripcion}
-                eliminarInscripcion={eliminarInscripcion}
-                abrirModalEditarReserva={abrirModalEditarReserva}
-                eliminarReserva={eliminarReserva}
               />
             </div>
           )}
@@ -1316,11 +1381,10 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
         setInscripcionSeleccionada={setInscripcionSeleccionada}
         nuevaInscripcion={nuevaInscripcion}
         setNuevaInscripcion={setNuevaInscripcion}
-        usuarios={usuarios}
         eventos={eventos}
         categorias={categorias}
         onClose={() => setMostrarModalInscripcion(false)}
-        onSubmit={crearOActualizarInscripcion}
+         onSubmit={modoEdicionInscripcion ? actualizarInscripcion : CrearInscripcion}
       />
 
       <CabanaModal

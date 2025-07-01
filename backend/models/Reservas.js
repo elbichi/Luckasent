@@ -32,8 +32,7 @@ const reservaSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Solicitud'
     }
-},{
-}, {
+}, { 
     timestamps: true
 });
 

@@ -24,13 +24,13 @@ const SolicitudModal = ({
           const user = await userService.getById(nuevaSolicitud.solicitante);
           setNuevaSolicitud((prev) => ({
             ...prev,
-            email: user.email || "",
-            telefono: user.phone || ""
+            correo: user.correo || "",
+            telefono: user.telefono || ""
           }));
         } catch (error) {
           setNuevaSolicitud((prev) => ({
             ...prev,
-            email: "",
+            correo: "",
             telefono: ""
           }));
         }
@@ -50,44 +50,50 @@ const SolicitudModal = ({
           </button>
         </div>
         <div className="modal-body">
-          <div className="form-grupo">
-            <label>Solicitante (ID):</label>
-            <input
-              type="text"
-              value={nuevaSolicitud.solicitante}
-              onChange={e => setNuevaSolicitud({ ...nuevaSolicitud, solicitante: e.target.value })}
-              placeholder="ID del solicitante"
-              required
-            />
-          </div>
-          <div className="form-grupo">
-            <label>Email:</label>
-            <input
-              type="email"
-              value={nuevaSolicitud.email}
-              onChange={e => setNuevaSolicitud({ ...nuevaSolicitud, email: e.target.value })}
-              placeholder="correo@ejemplo.com"
-              required
-            />
-          </div>
+          {!modoEdicion && (
+            <div className="form-grupo">
+              <label>Solicitante (ID):</label>
+              <input
+                type="text"
+                value={nuevaSolicitud.solicitante}
+                onChange={e => setNuevaSolicitud({ ...nuevaSolicitud, solicitante: e.target.value })}
+                placeholder="ID del solicitante"
+                required
+              />
+            </div>
+          )}
+          {!modoEdicion && (
+            <div className="form-grupo">
+              <label>Correo:</label>
+              <input
+                type="correo"
+                value={nuevaSolicitud.correo}
+                onChange={e => setNuevaSolicitud({ ...nuevaSolicitud, correo: e.target.value })}
+                placeholder="correo@ejemplo.com"
+                required
+              />
+            </div>
+          )}
+          {!modoEdicion && (
           <div className="form-grupo">
             <label>Teléfono:</label>
             <input
               type="text"
               value={nuevaSolicitud.telefono}
+              onChange={e => setNuevaSolicitud({ ...nuevaSolicitud, telefono: e.target.value })}
               readOnly
               placeholder="Teléfono"
               required
             />
           </div>
+          )}
+          {!modoEdicion && (
           <div className="form-grupo">
             <label>Tipo de Solicitud:</label>
             <select
-              value={modoEdicion ? solicitudSeleccionada?.tipoSolicitud : nuevaSolicitud.tipoSolicitud}
+              value={nuevaSolicitud.tipoSolicitud}
               onChange={e =>
-                modoEdicion
-                  ? setSolicitudSeleccionada({ ...solicitudSeleccionada, tipoSolicitud: e.target.value })
-                  : setNuevaSolicitud({ ...nuevaSolicitud, tipoSolicitud: e.target.value })
+               setNuevaSolicitud({ ...nuevaSolicitud, tipoSolicitud: e.target.value })
               }
               required
             >
@@ -101,14 +107,14 @@ const SolicitudModal = ({
               <option value="Otra">Otra</option>
             </select>
           </div>
+          )}
+          {!modoEdicion && (
           <div className="form-grupo">
             <label>Categoría:</label>
             <select
-              value={modoEdicion ? solicitudSeleccionada?.categoria : nuevaSolicitud.categoria}
+              value={ nuevaSolicitud.categoria}
               onChange={e =>
-                modoEdicion
-                  ? setSolicitudSeleccionada({ ...solicitudSeleccionada, categoria: e.target.value })
-                  : setNuevaSolicitud({ ...nuevaSolicitud, categoria: e.target.value })
+               setNuevaSolicitud({ ...nuevaSolicitud, categoria: e.target.value })
               }
               required
             >
@@ -120,19 +126,39 @@ const SolicitudModal = ({
               ))}
             </select>
           </div>
+          )}
+          {!modoEdicion && (
           <div className="form-grupo">
             <label>Descripción:</label>
             <input
               type="text"
-              value={modoEdicion ? solicitudSeleccionada?.descripcion : nuevaSolicitud.descripcion}
+              value={ nuevaSolicitud.descripcion}
               onChange={e =>
-                modoEdicion
-                  ? setSolicitudSeleccionada({ ...solicitudSeleccionada, descripcion: e.target.value })
-                  : setNuevaSolicitud({ ...nuevaSolicitud, descripcion: e.target.value })
+
+                  setNuevaSolicitud({...nuevaSolicitud, descripcion: e.target.value })
               }
               placeholder="Descripción"
               required
             />
+          </div>
+          )}
+          <div className="form-grupo">
+            <label>Estado:</label>
+            <select
+              value={modoEdicion ? solicitudSeleccionada?.estado : nuevaSolicitud.estado}
+              onChange={e =>
+                modoEdicion
+                  ? setSolicitudSeleccionada({ ...solicitudSeleccionada, estado: e.target.value })
+                  : setNuevaSolicitud({ ...nuevaSolicitud, estado: e.target.value })
+              }
+            >
+              <option value="Nueva">Nueva</option>
+              <option value="En Revisión">Revisión</option>
+              <option value="Aprobada">Aprobada</option>
+              <option value="Rechazada">Rechazada</option>
+              <option value="Completada">Completada</option>
+              <option value="Pendiente Info">Pendiente</option>
+            </select>
           </div>
           <div className="form-grupo">
             <label>Prioridad:</label>

@@ -2,30 +2,41 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
 const userSchema = new mongoose.Schema({
-  username: {
+  nombre: {
     type: String,
     required: true,
     trim: true
   },
-  lasname: {
+  apellido: {
     type: String,
     required: true, 
     trim: true
   },
-  email: {
+  correo: {
     type: String,
     required: true,
     unique: true,
     trim: true,
     lowercase: true
   },
-  phone: {
+  telefono: {
     type: String,
     required: true,
     unique: true,
     trim: true,
     match: /^[0-9]{7,15}$/  // solo dígitos, mínimo 7 y máximo 15 caracteres
   },
+  tipoDocumento: {
+    type: String,
+    enum: ['Cédula de ciudadanía', 'Cédula de extranjería', 'Pasaporte', 'Tarjeta de identidad'],
+    required: true
+   },
+   numeroDocumento: {
+    type: String,
+    required: true,
+    unique: true,
+    trim: true,
+   },
   password: {
     type: String,
     required: true,
@@ -35,6 +46,11 @@ const userSchema = new mongoose.Schema({
     type: String,
      enum: ['admin', 'tesorero', 'seminarista', 'externo'],
     default: 'externo'
+  },
+  estado: {
+    type: String,
+    enum: ['activo', 'inactivo'],
+    default: 'activo'
   }
 }, { timestamps: true });
 

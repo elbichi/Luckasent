@@ -2,34 +2,71 @@ const mongoose = require('mongoose');
 
 
 const eventoSchema = new mongoose.Schema({
-  name: {
+  nombre: {
     type: String,
-    required: [true, 'El nombre es obligatorio'],
+    required: true,
     trim: true,
     unique: true
   },
-  description: {
+  descripcion: {
     type: String,
-    required: [true, 'La descripción es obligatoria'],
+    required: true,
     trim: true
   },
-  price: {
+  imagen: {
+    type: String // URL o nombre del archivo
+  },
+  precio: {
     type: Number,
-    required: [true, 'El precio es obligatorio'],
-    min: [0, 'El precio no puede ser negativo']
+    required: true,
+    min: 0
   },
   categoria: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Categorizacion', // Referencia a la colección de categorías
+    ref: 'Categorizacion',
     required: true
   },
   etiquetas: [{
     type: String,
     trim: true
   }],
-  images: {
+  fechaEvento: {
+    type: Date,
+    required: true
+  },
+  horaInicio: {
+    type: String, // ejemplo: "09:00"
+    required: true
+  },
+  horaFin: {
+    type: String, // ejemplo: "17:00"
+    required: true
+  },
+  lugar: {
+    type: String,
+    required: true
+  },
+  direccion: {
     type: String
   },
+  duracionDias: {
+    type: Number,
+    default: 1
+  },
+  cuposTotales: {
+    type: Number,
+    required: true
+  },
+  cuposDisponibles: {
+    type: Number,
+    required: true
+  },
+  programa: [{
+    horaInicio: String,
+    horaFin: String,
+    tema: String,
+    descripcion: String
+  }],
   prioridad: {
     type: String,
     enum: ['Alta', 'Normal', 'Baja'],

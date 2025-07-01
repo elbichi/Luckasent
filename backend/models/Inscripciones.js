@@ -6,6 +6,37 @@ const inscripcionSchema = new mongoose.Schema({
         ref: 'usuarios', // Debe coincidir con User.js
         required: true,
     },
+    nombre:{
+        type: String,
+        required: true,
+        trim: true,
+    },
+    apellido: {
+        type: String, 
+    },
+    tipoDocumento: {
+        type: String,
+        enum: ['Cédula de ciudadanía', 'Cédula de extranjería', 'Pasaporte', 'Tarjeta de identidad'],
+        required: true,
+    },
+    numeroDocumento: {
+        type: String,
+        required: true,
+        trim: true,
+    },
+    correo: {
+        type: String,  
+    },
+    telefono: {
+        type: String,
+        required: true,
+        trim: true,
+    },
+    edad: {
+        type: Number,
+        required: true,
+        min: 0,
+    },
     evento: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Eventos', // Debe coincidir con Eventos.js

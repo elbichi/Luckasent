@@ -38,7 +38,7 @@ exports.getUserById = async(req, res)=>{
                 message:'No puedes ver usuario admin'
             });
         }
-        if (req.userRole === 'participante' && req.userId !== user._id.toString()){
+        if (req.userRole === 'externo' && req.userId !== user._id.toString()){
             return res.status(403).json({
                 success: false,
                 message:'No puedes ver usuario admin'
@@ -50,18 +50,7 @@ exports.getUserById = async(req, res)=>{
                 message:'No puedes ver usuario admin'
             });
         }
-        if (req.userRole === 'logistico' && req.userId !== user._id.toString()){
-            return res.status(403).json({
-                success: false,
-                message:'No puedes ver usuario admin'
-            });
-        }
-        if(req.userRole === 'externo' && user.role === 'admin'){
-            return res.status(403).json({
-                success: false,
-                message:'No puedes ver usuario admin'
-            });
-        }
+        
         res.status(200).json({
             success: true,
             user
@@ -77,13 +66,16 @@ exports.getUserById = async(req, res)=>{
 //Crear usurio (Admin y Coordinador)
 exports.createUser = async (req, res )=> {
     try{
-        const {username, lasname, email,phone, password,role} = req.body;
+        const {nombre, apellido, correo,telefono,tipoDocumento,numeroDocumento,estado, password,role} = req.body;
 
         const user = new User({
-            username,
-            lasname,
-            email,
-            phone,
+            nombre,
+            apellido,
+            correo,
+            telefono,
+            tipoDocumento,
+            numeroDocumento,
+            estado,
             password: await bcrypt.hash(password,10),
             role
         });
@@ -93,10 +85,13 @@ exports.createUser = async (req, res )=> {
             message:'Usuario creado exitosamente',
             user:{
                 id: savedUser._id,
-                username: savedUser.username,
-                lasname: savedUser.lasname,
-                email: savedUser.email,
-                phone: savedUser.phone,
+                nombre: savedUser.nombre,
+                apellido: savedUser.apellido,
+                correo: savedUser.correo,
+                telefono: savedUser.telefono,
+                tipoDocumento: savedUser.tipoDocumento,
+                numeroDocumento: savedUser.numeroDocumento,
+                estado: savedUser.estado,
                 role:savedUser.role
             }
         });

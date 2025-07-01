@@ -4,7 +4,7 @@ const ROLES = ['admin', 'tesorero', 'seminarista', 'externo'];
 const checkDuplicateEmailOrPhone = async (req, res, next) => {
     try {
         // Verificar email
-        const userByEmail = await User.findOne({ email: req.body.email });
+        const userByEmail = await User.findOne({ correo: req.body.correo });
         if (userByEmail) {
             return res.status(400).json({ 
                 success: false, 
@@ -13,7 +13,7 @@ const checkDuplicateEmailOrPhone = async (req, res, next) => {
         }
         
         // Verificar teléfono
-        const userByPhone = await User.findOne({ phone: req.body.phone });
+        const userByPhone = await User.findOne({ telefono: req.body.telefono });
         if (userByPhone) {
             return res.status(400).json({ 
                 success: false, 

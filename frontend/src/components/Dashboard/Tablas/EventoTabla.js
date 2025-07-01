@@ -5,16 +5,20 @@ const TablaEventos = ({ eventos, onEditar, onEliminar, onDeshabilitar }) => (
     <table className="tabla-usuarios">
       <thead>
         <tr>
-          <th>ID</th>
+         <th>ID</th>
           <th>Nombre</th>
-          <th>Descripción</th>
           <th>Precio</th>
           <th>Categoría</th>
-          <th>SubCategoría</th>
+          <th>Fecha Evento</th>
+          <th>Hora Inicio</th>
+          <th>Hora Fin</th>
+          <th>Lugar</th>
+          <th>Cupos Totales</th>
+          <th>Cupos Disponibles</th>
           <th>Prioridad</th>
           <th>Estado</th>
-          <th>Etiquetas</th>
           <th>Fecha Creación</th>
+          <th>Imagen</th>
           <th>Acciones</th>
         </tr>
       </thead>
@@ -24,40 +28,38 @@ const TablaEventos = ({ eventos, onEditar, onEliminar, onDeshabilitar }) => (
             <td colSpan={11}>No hay eventos para mostrar</td>
           </tr>
         ) : (
-          eventos.map((evento) => (
+         eventos.map((evento) => (
             <tr key={evento._id}>
               <td>{evento._id}</td>
-              <td>{evento.name}</td>
-              <td>{evento.description?.substring(0, 50)}...</td>
-              <td>${evento.price?.toLocaleString()}</td>
+              <td>{evento.nombre}</td>
+              <td>${evento.precio?.toLocaleString()}</td>
               <td>{evento.categoria?.nombre || "Sin categoría"}</td>
-              <td>{evento.subCategoria || "N/A"}</td>
-              <td>
-                <span className={`badge-prioridad prioridad-${evento.prioridad?.toLowerCase()}`}>
-                  {evento.prioridad}
-                </span>
-              </td>
+              <td>{evento.fechaEvento ? new Date(evento.fechaEvento).toLocaleDateString() : "N/A"}</td>
+              <td>{evento.horaInicio}</td>
+              <td>{evento.horaFin}</td>
+              <td>{evento.lugar}</td>
+              <td>{evento.cuposTotales}</td>
+              <td>{evento.cuposDisponibles}</td>
+              <td>{evento.prioridad}</td>
               <td>
                 <span className={`badge-estado estado-${evento.active ? "activo" : "inactivo"}`}>
                   {evento.active ? "Activo" : "Inactivo"}
                 </span>
               </td>
-              <td>
-                {evento.etiquetas?.slice(0, 2).join(", ")}
-                {evento.etiquetas?.length > 2 && " ..."}
-              </td>
+              
               <td>{evento.createdAt ? new Date(evento.createdAt).toLocaleDateString() : "N/A"}</td>
               <td>
+                {evento.imagen ? (
+                  <img src={evento.imagen} alt={evento.nombre} className="imagen-evento" />
+                ) : (
+                  "Sin imagen"
+                )}
+              </td>
+              <td>
                 <div className="acciones-botones">
-                  <button className="btn-editar" onClick={() => onEditar(evento)}>
-                    ✏️
-                  </button>
-                  <button className="btn-warning" onClick={() => onDeshabilitar(evento._id)}>
-                    ⏸️
-                  </button>
-                  <button className="btn-eliminar" onClick={() => onEliminar(evento._id)}>
-                    🗑️
-                  </button>
+                  <button className="btn-editar" onClick={() => onEditar(evento)}>✏️</button>
+                  <button className="btn-warning" onClick={() => onDeshabilitar(evento._id)}>⏸️</button>
+                  <button className="btn-eliminar" onClick={() => onEliminar(evento._id)}>🗑️</button>
                 </div>
               </td>
             </tr>

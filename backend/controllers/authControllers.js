@@ -5,47 +5,50 @@ const config = require('../config/auth.config');
 
 
 //roles del sistema 
-const ROLES ={
-    ADMIN: 'admin',
-    TESORERO: 'tesorero',
-    SEMINARISTA: 'seminarista',
-    EXTERNO: 'externo'
+const ROLES = {
+  ADMIN: 'admin',
+  TESORERO: 'tesorero',
+  SEMINARISTA: 'seminarista',
+  EXTERNO: 'externo'
 };
 
 
 //funcion para vcerificar permisos 
 const checkpermissions = (userRole, requiredRoles) => {
-    return requiredRoles.includes(userRole);
+  return requiredRoles.includes(userRole);
 };
 
 //1.regustro de usuarios (SOLL ADMIN)
-exports.signup = async (req, res) =>{
-    try {
-        //valdacion manual adicional
-         if (!req.body.username || req.body.username.trim() === '') {
+exports.signup = async (req, res) => {
+  try {
+    //valdacion manual adicional
+    if (!req.body.nombre || !req.body.apellido || !req.body.correo || !req.body.telefono ||
+      !req.body.tipoDocumento || !req.body.numeroDocumento || !req.body.password) {
       return res.status(400).json({
         success: false,
-        message: "El nombre de usuario es requerido",
-        field: "username"
+        message: "Faltan campos obligatorios para el registro"
       });
     }
-     // Crear instancia de usuario
+
+    // Crear instancia de usuario
     const user = new User({
-      username: req.body.username.trim(),
-      lasname: req.body.lasname.trim(),
-      email: req.body.email.toLowerCase().trim(),
-      phone: req.body.phone.trim(),
+      nombre: req.body.nombre.trim(),
+      apellido: req.body.apellido.trim(),
+      correo: req.body.correo.toLowerCase().trim(),
+      telefono: req.body.telefono.trim(),
+      tipoDocumento: req.body.tipoDocumento.trim(),
+      numeroDocumento: req.body.numeroDocumento.trim(),
       password: req.body.password,
       role: req.body.role || 'externo'
     });
-        // Guardar usuario en la base de datos
+    // Guardar usuario en la base de datos
     const savedUser = await user.save();
-    
+
     // Generar token JWT
     const token = jwt.sign(
-      { 
+      {
         id: savedUser._id,
-        role: savedUser.role 
+        role: savedUser.role
       },
       config.secret,
       { expiresIn: config.jwtExpiration }
@@ -62,8 +65,8 @@ exports.signup = async (req, res) =>{
       user: userData
     });
 
-    }catch (error){
-        console.error('[AuthController] Error en registro:', error);
+  } catch (error) {
+    console.error('[AuthController] Error en registro:', error);
 
     // Manejo especial de errores de MongoDB
     if (error.code === 11000) {
@@ -90,15 +93,15 @@ exports.signup = async (req, res) =>{
       message: "Error al registrar usuario",
       error: error.message
     });
-  } 
+  }
 };
 
-exports.signin =async (req, res) => {
-      try {
-    const { email, password } = req.body;
-    
+exports.signin = async (req, res) => {
+  try {
+    const { correo, password } = req.body;
+
     // 1. Validación básica
-    if (!email || !password) {
+    if (!correo || !password) {
       return res.status(400).json({
         success: false,
         message: "Email y contraseña son requeridos"
@@ -106,8 +109,8 @@ exports.signin =async (req, res) => {
     }
 
     // 2. Buscar usuario incluyendo el password (que normalmente está oculto)
-    const user = await User.findOne({ email }).select('+password');
-    
+    const user = await User.findOne({ correo }).select('+password');
+
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -117,7 +120,7 @@ exports.signin =async (req, res) => {
 
     // 3. Comparar contraseñas
     const isMatch = await user.comparePassword(password);
-    
+
     if (!isMatch) {
       return res.status(401).json({
         success: false,
@@ -173,9 +176,7 @@ exports.updateUser = async (req, res) => {
     // Los demás roles solo pueden modificar su propio perfil
     const allowedSelfRoles = [
       ROLES.TESORERO,
-      ROLES.PARTICIPANTE,
       ROLES.SEMINARISTA,
-      ROLES.LOGISTICO,
       ROLES.EXTERNO
     ];
 
@@ -193,7 +194,7 @@ exports.updateUser = async (req, res) => {
     }
 
     // Determinar campos permitidos para actualizar
-    const allowedFields = ['username', 'lasname', 'email', 'phone'];
+    const allowedFields = ['nombre', 'apellido', 'correo', 'telefono'];
     if (currentUserRole === ROLES.ADMIN) {
       allowedFields.push('role'); // solo el admin puede cambiar roles
     }
@@ -240,7 +241,7 @@ exports.deleteUser = async (req, res) => {
     }
 
     const deletedUser = await User.findByIdAndDelete(req.params.id);
-    
+
     if (!deletedUser) {
       return res.status(404).json({
         success: false,

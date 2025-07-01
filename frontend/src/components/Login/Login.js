@@ -7,7 +7,7 @@ import { FaGoogle } from "react-icons/fa";
 import './Login.css';
 
 const Login = () => {
-  const [email, setEmail] = useState('');
+  const [correo, setcorreo] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
@@ -16,7 +16,7 @@ const Login = () => {
     e.preventDefault();
     setError('');
     try {
-      const data = await authService.login(email, password);
+      const data = await authService.login(correo, password);
       localStorage.setItem('token', data.token);
       navigate('/admin/users');
     } catch (err) {
@@ -34,13 +34,13 @@ const Login = () => {
           <h2>Iniciar Sesión</h2>
           {error && <div className="alert alert-danger">{error}</div>}
           <form onSubmit={handleSubmit}>
-            <label htmlFor="email">Correo Electrónico</label>
+            <label htmlFor="correo">Correo Electrónico</label>
             <input
-              type="email"
-              id="email"
+              type="correo"
+              id="correo"
               className="form-control"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              value={correo}
+              onChange={(e) => setcorreo(e.target.value)}
               placeholder="Ingrese su correo electrónico"
               required
             />

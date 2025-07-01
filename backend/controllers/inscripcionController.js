@@ -1,7 +1,9 @@
+const mongoose = require('mongoose');
 const Inscripcion = require('../models/Inscripciones');
 const Solicitud = require('../models/Solicitud');
+const Evento = require('../models/Eventos');
 const Usuario = require('../models/User');
-
+const Categorizacion = require('../models/categorizacion');
 // Crear inscripción
 exports.crearInscripcion = async (req, res) => {
   try {
@@ -43,8 +45,8 @@ exports.crearInscripcion = async (req, res) => {
     const solicitud = new Solicitud({
       solicitante: user._id,
       responsable: user._id, // O el responsable que corresponda
-      email: user.email,
-      telefono: user.phone,
+      correo: user.correo,
+      telefono: user.telefono,
       tipoSolicitud: 'Inscripción',
       categoria: req.body.categoria,
       descripcion: `Inscripción al evento ${req.body.evento}`,

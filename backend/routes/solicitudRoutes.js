@@ -13,7 +13,7 @@ const validarSolicitud = [
     .trim()
     .notEmpty()
     .withMessage('El nombre del solicitante es requerido'),
-  body('email')
+  body('correo')
     .trim()
     .isEmail()
     .withMessage('Email inválido'),

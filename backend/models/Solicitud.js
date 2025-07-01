@@ -6,7 +6,7 @@ const solicitudSchema = new mongoose.Schema({
     ref: 'usuarios',
     required: true
   },
-  email: {
+  correo: {
     type: String,
     required: [true,'el email es obligatorio'],
     lowercase: true,

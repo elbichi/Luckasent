@@ -22,6 +22,7 @@ const TareaModal = ({
           </button>
         </div>
         <div className="modal-body">
+          {/* Título */}
           <div className="form-grupo">
             <label>Título:</label>
             <input
@@ -36,20 +37,23 @@ const TareaModal = ({
               required
             />
           </div>
+
+          {/* Descripción */}
           <div className="form-grupo">
             <label>Descripción:</label>
-            <input
-              type="text"
+            <textarea
               value={modoEdicion ? tareaSeleccionada?.descripcion : nuevaTarea.descripcion}
               onChange={e =>
                 modoEdicion
                   ? setTareaSeleccionada({ ...tareaSeleccionada, descripcion: e.target.value })
                   : setNuevaTarea({ ...nuevaTarea, descripcion: e.target.value })
               }
-              placeholder="Descripción"
+              placeholder="Descripción de la tarea"
               required
             />
           </div>
+
+          {/* Fecha Límite */}
           <div className="form-grupo">
             <label>Fecha Límite:</label>
             <input
@@ -63,19 +67,58 @@ const TareaModal = ({
               required
             />
           </div>
+
+          {/* Asignado A */}
           <div className="form-grupo">
-            <label>Responsable:</label>
-            <input
-              type="text"
-              value={modoEdicion ? tareaSeleccionada?.responsable : nuevaTarea.responsable}
+            <label>Asignado a:</label>
+            <select
+              value={modoEdicion ? tareaSeleccionada?.asignadoA : nuevaTarea.asignadoA}
               onChange={e =>
                 modoEdicion
-                  ? setTareaSeleccionada({ ...tareaSeleccionada, responsable: e.target.value })
-                  : setNuevaTarea({ ...nuevaTarea, responsable: e.target.value })
+                  ? setTareaSeleccionada({ ...tareaSeleccionada, asignadoA: e.target.value })
+                  : setNuevaTarea({ ...nuevaTarea, asignadoA: e.target.value })
               }
-              placeholder="Responsable"
-            />
+              required
+            >
+              
+            </select>
           </div>
+
+        
+          <div className="form-grupo">
+            <label>Asignado por:</label>
+            <select
+              value={modoEdicion ? tareaSeleccionada?.asignadoPor : nuevaTarea.asignadoPor}
+              onChange={e =>
+                modoEdicion
+                  ? setTareaSeleccionada({ ...tareaSeleccionada, asignadoPor: e.target.value })
+                  : setNuevaTarea({ ...nuevaTarea, asignadoPor: e.target.value })
+              }
+              required
+            >
+              
+            </select>
+          </div>
+
+          {/* Prioridad */}
+          <div className="form-grupo">
+            <label>Prioridad:</label>
+            <select
+              value={modoEdicion ? tareaSeleccionada?.prioridad : nuevaTarea.prioridad}
+              onChange={e =>
+                modoEdicion
+                  ? setTareaSeleccionada({ ...tareaSeleccionada, prioridad: e.target.value })
+                  : setNuevaTarea({ ...nuevaTarea, prioridad: e.target.value })
+              }
+              required
+            >
+              <option value="media">Media</option>
+              <option value="alta">Alta</option>
+              <option value="baja">Baja</option>
+            </select>
+          </div>
+
+          {/* Estado */}
           <div className="form-grupo">
             <label>Estado:</label>
             <select
@@ -85,13 +128,16 @@ const TareaModal = ({
                   ? setTareaSeleccionada({ ...tareaSeleccionada, estado: e.target.value })
                   : setNuevaTarea({ ...nuevaTarea, estado: e.target.value })
               }
+              required
             >
               <option value="pendiente">Pendiente</option>
               <option value="en progreso">En Progreso</option>
               <option value="completada">Completada</option>
+              <option value="cancelada">Cancelada</option>
             </select>
           </div>
         </div>
+
         <div className="modal-footer">
           <button className="btn-secondary" onClick={onClose}>
             Cancelar

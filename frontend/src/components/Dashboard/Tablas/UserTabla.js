@@ -10,6 +10,8 @@ const TablaUsuarios = ({ usuarios, onEditar, onEliminar }) => (
           <th>Apellido</th>
           <th>Correo</th>
           <th>Teléfono</th>
+          <th>Tipo de Documento</th>
+          <th>Número de Documento</th>
           <th>Rol</th>
           <th>Estado</th>
           <th>Fecha Registro</th>
@@ -27,13 +29,15 @@ const TablaUsuarios = ({ usuarios, onEditar, onEliminar }) => (
               <td>{user._id}</td>
               <td>
                 <div className="usuario-celda">
-                  <div className="usuario-avatar-mini">{user.username?.substring(0, 2).toUpperCase()}</div>
-                  <span>{user.username}</span>
+                  <div className="usuario-avatar-mini">{user.nombre?.substring(0, 2).toUpperCase()}</div>
+                  <span>{user.nombre}</span>
                 </div>
               </td>
-              <td>{user.lasname}</td>
-              <td>{user.email}</td>
-              <td>{user.phone}</td>
+              <td>{user.apellido}</td>
+              <td>{user.correo}</td>
+              <td>{user.telefono}</td>
+              <td>{user.tipoDocumento}</td>
+              <td>{user.numeroDocumento}</td>
               <td>
                 <span className={`badge-rol rol-${user.role}`}>{user.role}</span>
               </td>

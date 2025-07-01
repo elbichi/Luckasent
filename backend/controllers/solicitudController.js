@@ -39,9 +39,9 @@ exports.obtenerSolicitudes = async (req, res) => {
 
       // Ejecutar consulta
       const solicitudes = await Solicitud.find(filtros)
-        .populate('solicitante', 'username email')
+        .populate('solicitante', 'username nombre correo telefono role')
         .populate('categoria', 'nombre descripcion codigo')
-        .populate('responsable', 'username email')
+        .populate('responsable', 'username nombre email')
         .sort(sortOptions)
         .skip(skip)
         .limit(parseInt(limit))
@@ -133,7 +133,7 @@ exports.obtenerSolicitudes = async (req, res) => {
 
       const nuevaSolicitud = new Solicitud({
         solicitante: req.body.solicitante,
-        email: req.body.email,
+        correo: req.body.correo,
         telefono: req.body.telefono,
         tipoSolicitud: req.body.tipoSolicitud,
         categoria: req.body.categoria,
@@ -141,6 +141,7 @@ exports.obtenerSolicitudes = async (req, res) => {
         estado: req.body.estado || 'Nueva',
         prioridad: req.body.prioridad,
         observaciones: req.body.observaciones,
+        fechaSolicitud: req.body.fechaSolicitud,
         responsable: req.body.responsable
       });
 

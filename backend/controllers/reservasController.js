@@ -7,7 +7,7 @@ const Cabana = require('../models/Cabana');
 // Crear reserva
 exports.crearReserva = async (req, res) => {
   try {
-    const { usuario, cabana, fechaInicio, fechaFin, observaciones } = req.body;
+    const { usuario, cabana, fechaInicio, fechaFin, estado, observaciones } = req.body;
 
     // Validar IDs
     if (!mongoose.Types.ObjectId.isValid(usuario)) {
@@ -29,11 +29,12 @@ exports.crearReserva = async (req, res) => {
 
     // Crear reserva
     const reserva = new Reserva({
-      usuario,
-      cabana,
-      fechaInicio,
-      fechaFin,
-      observaciones
+        usuario: req.body.usuario,
+        cabana: req.body.cabana,
+        fechaInicio: req.body.fechaInicio,
+        fechaFin: req.body.fechaFin,
+        estado: req.body.estado,
+        observaciones: req.body.observaciones
     });
     await reserva.save();
 
@@ -41,8 +42,8 @@ exports.crearReserva = async (req, res) => {
     const solicitud = new Solicitud({
       solicitante: usuarioExiste._id,
       responsable: usuarioExiste._id,
-      email: usuarioExiste.email,
-      telefono: usuarioExiste.phone,
+      correo: usuarioExiste.correo,
+      telefono: usuarioExiste.telefono,
       tipoSolicitud: 'Hospedaje',
       categoria: cabanaExiste.categoria, // Guarda la categoría de la cabaña
       descripcion: `Reserva de cabaña ${cabanaExiste.nombre}`,

@@ -26,11 +26,11 @@ const UsuarioModal = ({
             <label>Nombre:</label>
             <input
               type="text"
-              value={modoEdicion ? usuarioSeleccionado?.username : nuevoUsuario.username}
+              value={modoEdicion ? usuarioSeleccionado?.nombre : nuevoUsuario.nombre}
               onChange={e =>
                 modoEdicion
-                  ? setUsuarioSeleccionado({ ...usuarioSeleccionado, username: e.target.value })
-                  : setNuevoUsuario({ ...nuevoUsuario, username: e.target.value })
+                  ? setUsuarioSeleccionado({ ...usuarioSeleccionado, nombre: e.target.value })
+                  : setNuevoUsuario({ ...nuevoUsuario, nombre: e.target.value })
               }
               placeholder="Nombre"
               required
@@ -40,13 +40,27 @@ const UsuarioModal = ({
             <label>Apellido:</label>
             <input
               type="text"
-              value={modoEdicion ? usuarioSeleccionado?.lasname : nuevoUsuario.lasname}
+              value={modoEdicion ? usuarioSeleccionado?.apellido : nuevoUsuario.apellido}
               onChange={e =>
                 modoEdicion
-                  ? setUsuarioSeleccionado({ ...usuarioSeleccionado, lasname: e.target.value })
-                  : setNuevoUsuario({ ...nuevoUsuario, lasname: e.target.value })
+                  ? setUsuarioSeleccionado({ ...usuarioSeleccionado, apellido: e.target.value })
+                  : setNuevoUsuario({ ...nuevoUsuario, apellido: e.target.value })
               }
               placeholder="Apellido"
+              required
+            />
+          </div>
+          <div className="form-grupo">
+            <label>Correo:</label>
+            <input
+              type="email"
+              value={modoEdicion ? usuarioSeleccionado?.correo : nuevoUsuario.correo}
+              onChange={e =>
+                modoEdicion
+                  ? setUsuarioSeleccionado({ ...usuarioSeleccionado, correo: e.target.value })
+                  : setNuevoUsuario({ ...nuevoUsuario, correo: e.target.value })
+              }
+              placeholder="correo@ejemplo.com"
               required
             />
           </div>
@@ -54,27 +68,45 @@ const UsuarioModal = ({
             <label>Teléfono:</label>
             <input
               type="text"
-              value={modoEdicion ? usuarioSeleccionado?.phone : nuevoUsuario.phone}
+              value={modoEdicion ? usuarioSeleccionado?.telefono : nuevoUsuario.telefono}
               onChange={e =>
                 modoEdicion
-                  ? setUsuarioSeleccionado({ ...usuarioSeleccionado, phone: e.target.value })
-                  : setNuevoUsuario({ ...nuevoUsuario, phone: e.target.value })
+                  ? setUsuarioSeleccionado({ ...usuarioSeleccionado, telefono: e.target.value })
+                  : setNuevoUsuario({ ...nuevoUsuario, telefono: e.target.value })
               }
               placeholder="Teléfono"
               required
             />
           </div>
           <div className="form-grupo">
-            <label>Email:</label>
-            <input
-              type="email"
-              value={modoEdicion ? usuarioSeleccionado?.email : nuevoUsuario.email}
+            <label>Tipo de Documento:</label>
+            <select
+              value={modoEdicion ? usuarioSeleccionado?.tipoDocumento : nuevoUsuario.tipoDocumento}
               onChange={e =>
                 modoEdicion
-                  ? setUsuarioSeleccionado({ ...usuarioSeleccionado, email: e.target.value })
-                  : setNuevoUsuario({ ...nuevoUsuario, email: e.target.value })
+                  ? setUsuarioSeleccionado({ ...usuarioSeleccionado, tipoDocumento: e.target.value })
+                  : setNuevoUsuario({ ...nuevoUsuario, tipoDocumento: e.target.value })
               }
-              placeholder="correo@ejemplo.com"
+              required
+            >
+              <option value="">Seleccione...</option>
+              <option value="Cédula de ciudadanía">Cédula de ciudadanía</option>
+              <option value="Cédula de extranjería">Cédula de extranjería</option>
+              <option value="Pasaporte">Pasaporte</option>
+              <option value="Tarjeta de identidad">Tarjeta de identidad</option>
+            </select>
+          </div>
+          <div className="form-grupo">
+            <label>Número de Documento:</label>
+            <input
+              type="text"
+              value={modoEdicion ? usuarioSeleccionado?.numeroDocumento : nuevoUsuario.numeroDocumento}
+              onChange={e =>
+                modoEdicion
+                  ? setUsuarioSeleccionado({ ...usuarioSeleccionado, numeroDocumento: e.target.value })
+                  : setNuevoUsuario({ ...nuevoUsuario, numeroDocumento: e.target.value })
+              }
+              placeholder="Número de documento"
               required
             />
           </div>
@@ -89,7 +121,7 @@ const UsuarioModal = ({
                   : setNuevoUsuario({ ...nuevoUsuario, password: e.target.value })
               }
               placeholder="Contraseña"
-              required
+              required={!modoEdicion}
             />
           </div>
           <div className="form-grupo">
@@ -109,19 +141,21 @@ const UsuarioModal = ({
               <option value="externo">Externo</option>
             </select>
           </div>
-          {modoEdicion && (
-            <div className="form-grupo">
-              <label>Estado:</label>
-              <select
-                value={usuarioSeleccionado?.status || "active"}
-                onChange={(e) => setUsuarioSeleccionado({ ...usuarioSeleccionado, status: e.target.value })}
-              >
-                <option value="active">Activo</option>
-                <option value="inactive">Inactivo</option>
-                <option value="suspended">Suspendido</option>
-              </select>
-            </div>
-          )}
+          <div className="form-grupo">
+            <label>Estado:</label>
+            <select
+              value={modoEdicion ? usuarioSeleccionado?.estado : nuevoUsuario.estado}
+              onChange={e =>
+                modoEdicion
+                  ? setUsuarioSeleccionado({ ...usuarioSeleccionado, estado: e.target.value })
+                  : setNuevoUsuario({ ...nuevoUsuario, estado: e.target.value })
+              }
+              required
+            >
+              <option value="activo">Activo</option>
+              <option value="inactivo">Inactivo</option>
+            </select>
+          </div>
         </div>
         <div className="modal-footer">
           <button className="btn-secondary" onClick={onClose}>
