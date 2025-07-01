@@ -6,10 +6,34 @@ const mongoose = require('mongoose');
 // Obtener todos los eventos
 exports.getAllEvents = async (req, res) => {
   try {
-    const events = await Evento.find({ active: true }).populate('categoria');
-    console.log('Eventos encontrados:', events.length);
+    console.log('[EVENTOS] Consultando eventos para usuario:', req.userRole, 'ID:', req.userId);
+    
+    // Primero verificar cuántos eventos hay en total
+    const totalEvents = await Evento.countDocuments();
+    console.log('[EVENTOS] Total de eventos en BD:', totalEvents);
+    
+    // Verificar cuántos eventos activos hay
+    const activeEvents = await Evento.countDocuments({ active: true });
+    console.log('[EVENTOS] Eventos activos:', activeEvents);
+    
+    // Si no hay eventos activos, mostrar algunos eventos sin filtro para debug
+    if (activeEvents === 0 && totalEvents > 0) {
+      const allEvents = await Evento.find().limit(5);
+      console.log('[EVENTOS] Muestra de eventos (cualquier estado):', allEvents.map(e => ({
+        id: e._id,
+        nombre: e.nombre,
+        active: e.active
+      })));
+    }
+    
+    // TEMPORAL: Mostrar todos los eventos independientemente del estado active
+    // Cambiar de: { active: true } a: {} para mostrar todos
+    const events = await Evento.find({}).populate('categoria');
+    console.log('[EVENTOS] Eventos encontrados después del populate:', events.length);
+    
     res.status(200).json({ success: true, data: events });
   } catch (error) {
+    console.error('[EVENTOS] Error al obtener eventos:', error);
     res.status(500).json({ success: false, message: 'Error al obtener eventos', error: error.message });
   }
 };
@@ -107,16 +131,67 @@ exports.createEvent = async (req, res) => {
 // Actualizar evento
 exports.updateEvent = async (req, res) => {
   try {
-    const updatedEvent = await Evento.findByIdAndUpdate(
-      req.params.id,
-      { $set: req.body },
-      { new: true }
-    );
-    if (!updatedEvent) {
+    console.log('[EVENTOS] updateEvent - ID:', req.params.id);
+    console.log('[EVENTOS] updateEvent - Datos recibidos:', JSON.stringify(req.body, null, 2));
+    console.log('[EVENTOS] updateEvent - Usuario:', req.userId, 'Role:', req.userRole);
+    
+    // Primero obtenemos el evento actual para comparar
+    const currentEvent = await Evento.findById(req.params.id);
+    if (!currentEvent) {
+      console.log('[EVENTOS] updateEvent - Evento no encontrado');
       return res.status(404).json({ success: false, message: 'Evento no encontrado' });
     }
+    
+    console.log('[EVENTOS] updateEvent - Evento actual nombre:', currentEvent.nombre);
+    console.log('[EVENTOS] updateEvent - Nuevo nombre:', req.body.nombre);
+    console.log('[EVENTOS] updateEvent - Nombres son iguales:', currentEvent.nombre === req.body.nombre);
+    
+    // Si el nombre no ha cambiado, lo excluimos de la actualización para evitar conflictos de unique
+    const updateData = { ...req.body };
+    if (updateData.nombre === currentEvent.nombre) {
+      delete updateData.nombre;
+      console.log('[EVENTOS] updateEvent - Nombre no cambió, excluyendo de actualización');
+    } else {
+      console.log('[EVENTOS] updateEvent - Nombre cambió, manteniendo en actualización');
+      // Verificar si el nuevo nombre ya existe en otro evento
+      const existingEvent = await Evento.findOne({ 
+        nombre: updateData.nombre, 
+        _id: { $ne: req.params.id } 
+      });
+      if (existingEvent) {
+        console.log('[EVENTOS] updateEvent - Ya existe otro evento con ese nombre');
+        return res.status(400).json({
+          success: false,
+          message: 'Ya existe un evento con ese nombre',
+          field: 'nombre'
+        });
+      }
+    }
+    
+    console.log('[EVENTOS] updateEvent - Datos finales para actualización:', JSON.stringify(updateData, null, 2));
+    
+    const updatedEvent = await Evento.findByIdAndUpdate(
+      req.params.id,
+      { $set: updateData },
+      { new: true, runValidators: true }
+    );
+    
+    console.log('[EVENTOS] updateEvent - Evento actualizado exitosamente');
     res.status(200).json({ success: true, data: updatedEvent });
   } catch (error) {
+    console.error('[EVENTOS] updateEvent - Error:', error.message);
+    console.error('[EVENTOS] updateEvent - Stack:', error.stack);
+    
+    // Manejo específico para errores de duplicado
+    if (error.code === 11000) {
+      const field = Object.keys(error.keyPattern)[0];
+      return res.status(400).json({
+        success: false,
+        message: `Ya existe un evento con ese ${field}`,
+        field: field
+      });
+    }
+    
     res.status(500).json({ success: false, message: 'Error al actualizar evento', error: error.message });
   }
 };
@@ -220,6 +295,33 @@ exports.getEventosPorCategoria = async (req, res) => {
       success: false,
       message: 'Error al obtener eventos por categoría',
       error: error.message
+    });
+  }
+};
+
+// Función temporal para activar todos los eventos
+exports.activarTodosLosEventos = async (req, res) => {
+  try {
+    console.log('[EVENTOS] Activando todos los eventos...');
+    
+    const result = await Evento.updateMany(
+      { active: false },
+      { $set: { active: true } }
+    );
+    
+    console.log('[EVENTOS] Eventos activados:', result.modifiedCount);
+    
+    res.status(200).json({
+      success: true,
+      message: `Se activaron ${result.modifiedCount} eventos`,
+      data: result
+    });
+  } catch (error) {
+    console.error('[EVENTOS] Error al activar eventos:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Error al activar eventos', 
+      error: error.message 
     });
   }
 };

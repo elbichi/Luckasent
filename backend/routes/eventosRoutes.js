@@ -20,6 +20,9 @@ router.get('/', eventosController.getAllEvents);
 router.get('/:id', eventosController.getEventById);
 router.get('/categoria', eventosController.getEventosPorCategoria);
 
+// Ruta temporal para activar todos los eventos (solo admin)
+router.patch('/activar-todos', role.isAdmin, eventosController.activarTodosLosEventos);
+
 // Rutas de creación y modificación (admin y tesorero)
 router.post('/', role.checkRole('admin', 'tesorero'), validarEvento, eventosController.createEvent);
 router.put('/:id', role.checkRole('admin', 'tesorero'), eventosController.updateEvent);

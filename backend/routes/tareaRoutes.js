@@ -11,8 +11,8 @@ router.get('/', tareaController.obtenerTareas);
 router.get('/:id', tareaController.obtenerTareaPorId);
 
 // Rutas de creación y modificación (admin y tesorero)
-router.post('/', role.checkRole('admin', 'tesorero'), tareaController.crearTarea);
-router.put('/:id', role.checkRole('admin', 'tesorero'), tareaController.actualizarTarea);
+router.post('/', role.checkRole('admin', 'tesorero','seminarista'), tareaController.crearTarea);
+router.put('/:id', role.checkRole('admin', 'tesorero','seminarista'), tareaController.actualizarTarea);
 
 // Rutas de eliminación (solo admin)
 router.delete('/:id', role.isAdmin, tareaController.eliminarTarea);

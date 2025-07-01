@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import { useNavigate } from 'react-router-dom';
 import { userService } from "../../services/userService";
 import { inscripcionService } from "../../services/inscripcionService";
 import { solicitudService } from "../../services/solicirudService";
@@ -26,7 +27,28 @@ import TablaReservas from './Tablas/ReservaTabla';
 import Reportes from "../Reportes/Reportes";
 import "./Dashboard.css";
 
-const Dashboard = ({ usuario, onCerrarSesion }) => {
+const Dashboard = ({ usuario: usuarioProp, onCerrarSesion: onCerrarSesionProp, modoTesorero = false, userRole, readOnly = false, canCreate = true, canEdit = true, canDelete = true }) => {
+  const [usuarioActual, setUsuarioActual] = useState(usuarioProp);
+
+  // Si no se pasa usuario como prop, obtenerlo desde localStorage
+  useEffect(() => {
+    if (!usuarioProp) {
+      const usuarioStorage = localStorage.getItem('usuario');
+      if (usuarioStorage) {
+        setUsuarioActual(JSON.parse(usuarioStorage));
+      }
+    }
+  }, [usuarioProp]);
+
+  const handleCerrarSesion = () => {
+    if (onCerrarSesionProp) {
+      onCerrarSesionProp();
+    } else {
+      localStorage.removeItem('token');
+      localStorage.removeItem('usuario');
+      window.location.href = '/login';
+    }
+  };
 
   const [usuarios, setUsuarios] = useState([]);
   const [cargando, setCargando] = useState(true);
@@ -140,7 +162,7 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
       console.error("Error al obtener usuarios:", error.message);
       if (error.message === "Unauthorized") {
         localStorage.removeItem("token");
-        onCerrarSesion();
+        handleCerrarSesion();
       }
     } finally {
       setCargando(false);
@@ -985,6 +1007,15 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
     );
   }
 
+  // Si no hay usuario y no se está pasando como prop, mostrar loading
+  if (!usuarioActual && !usuarioProp) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <div>Cargando...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="dashboard-contenedor">
       {/* Sidebar */}
@@ -1101,8 +1132,8 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
 
             </div>
             <div className="usuario-info">
-              <div className="usuario-avatar">{usuario?.nombre?.substring(0, 2).toUpperCase()}</div>
-              <span className="usuario-nombre">{usuario?.nombre}</span>
+              <div className="usuario-avatar">{usuarioActual?.nombre?.substring(0, 2).toUpperCase()}</div>
+              <span className="usuario-nombre">{usuarioActual?.nombre}</span>
               <button className="btn-logout" onClick={handleLogout}>
                 Cerrar sesión
               </button>
@@ -1176,9 +1207,11 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
             <div className="seccion-usuarios">
               <div className="seccion-header">
                 <h2>Gestión de Usuarios</h2>
-                <button className="btn-primary" onClick={abrirModalCrear}>
-                  ➕ Nuevo Usuario
-                </button>
+                {!readOnly && (
+                  <button className="btn-primary" onClick={abrirModalCrear}>
+                    ➕ Nuevo Usuario
+                  </button>
+                )}
               </div>
               <div className="busqueda-contenedor">
                 <input
@@ -1191,8 +1224,8 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
               </div>
               <TablaUsuarios
                 usuarios={usuariosFiltrados}
-                onEditar={abrirModalEditar}
-                onEliminar={eliminarUsuario}
+                onEditar={readOnly ? null : abrirModalEditar}
+                onEliminar={(modoTesorero || readOnly) ? null : eliminarUsuario}
               />
             </div>
           )}
@@ -1206,14 +1239,16 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
             <div className="seccion-usuarios">
               <div className="seccion-header">
                 <h2>Gestión de Solicitudes</h2>
-                <button className="btn-primary" onClick={abrirModalCrearSolicitud}>
-                  ➕ Nuevo Solicitud
-                </button>
+                {(canCreate && !readOnly) && (
+                  <button className="btn-primary" onClick={abrirModalCrearSolicitud}>
+                    ➕ Nuevo Solicitud
+                  </button>
+                )}
               </div>
               <TablaUnificadaSolicitudes
                 datosUnificados={{ solicitudes, inscripciones: [], reservas: [] }}
-                abrirModalEditarSolicitud={abrirModalEditarSolicitud}
-                eliminarSolicitud={eliminarSolicitud}
+                abrirModalEditarSolicitud={(canEdit && !readOnly) ? abrirModalEditarSolicitud : null}
+                eliminarSolicitud={(canDelete && !modoTesorero && !readOnly) ? eliminarSolicitud : null}
               />
             </div>
           )}
@@ -1222,14 +1257,16 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
             <div className="seccion-usuarios">
               <div className="seccion-header">
                 <h2>Gestión de Inscripciones</h2>
-                <button className="btn-primary" onClick={abrirModalCrearInscripcion}>
-                  ➕ Nueva Inscripción
-                </button>
+                {(canCreate && !readOnly) && (
+                  <button className="btn-primary" onClick={abrirModalCrearInscripcion}>
+                    ➕ Nueva Inscripción
+                  </button>
+                )}
               </div>
               <TablaInscripciones
                 inscripciones={inscripciones}
-                onEditar={abrirModalEditarInscripcion}
-                onEliminar={eliminarInscripcion}
+                onEditar={(canEdit && !readOnly) ? abrirModalEditarInscripcion : null}
+                onEliminar={(canDelete && !modoTesorero && !readOnly) ? eliminarInscripcion : null}
               />
             </div>
           )}
@@ -1238,15 +1275,17 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
             <div className="seccion-usuarios">
               <div className="seccion-header">
                 <h2>Gestión de Eventos</h2>
-                <button className="btn-primary" onClick={abrirModalCrearEvento}>
-                  ➕ Nuevo Evento
-                </button>
+                {!readOnly && (
+                  <button className="btn-primary" onClick={abrirModalCrearEvento}>
+                    ➕ Nuevo Evento
+                  </button>
+                )}
               </div>
               <TablaEventos
                 eventos={eventos}
-                onEditar={abrirModalEditarEvento}
-                onEliminar={eliminarEvento}
-                onDeshabilitar={deshabilitarEvento}
+                onEditar={readOnly ? null : abrirModalEditarEvento}
+                onEliminar={(modoTesorero || readOnly) ? null : eliminarEvento}
+                onDeshabilitar={readOnly ? null : deshabilitarEvento}
               />
             </div>
           )}
@@ -1254,14 +1293,16 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
             <div className="seccion-categorias">
               <div className="seccion-header">
                 <h2>Categorización</h2>
-                <button className="btn-primary" onClick={abrirModalCrearCategoria}>
-                  ➕ Nueva Categoría
-                </button>
+                {!readOnly && (
+                  <button className="btn-primary" onClick={abrirModalCrearCategoria}>
+                    ➕ Nueva Categoría
+                  </button>
+                )}
               </div>
               <TablaCategorias
                 categorias={categorias}
-                onEditar={abrirModalEditarCategoria}
-                onEliminar={eliminarCategoria}
+                onEditar={readOnly ? null : abrirModalEditarCategoria}
+                onEliminar={(modoTesorero || readOnly) ? null : eliminarCategoria}
               />
             </div>
           )}
@@ -1269,15 +1310,17 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
             <div className="seccion-usuarios">
               <div className="seccion-header">
                 <h2>Gestión de Tareas</h2>
-                <button className="btn-primary" onClick={abrirModalCrearTarea}>
-                  ➕ Nueva Tarea
-                </button>
+                {!readOnly && (
+                  <button className="btn-primary" onClick={abrirModalCrearTarea}>
+                    ➕ Nueva Tarea
+                  </button>
+                )}
               </div>
               <TablaTareas
                 tareas={tareas}
-                onEditar={abrirModalEditarTarea}
-                onEliminar={eliminarTarea}
-                onCambiarEstado={cambiarEstadoTarea}
+                onEditar={readOnly ? null : abrirModalEditarTarea}
+                onEliminar={(modoTesorero || readOnly) ? null : eliminarTarea}
+                onCambiarEstado={readOnly ? null : cambiarEstadoTarea}
               />
             </div>
           )}
@@ -1285,14 +1328,16 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
             <div className="seccion-usuarios">
               <div className="seccion-header">
                 <h2>Gestión de Cabañas</h2>
-                <button className="btn-primary" onClick={abrirModalCrearCabana}>
-                  ➕ Nueva Cabaña
-                </button>
+                {!readOnly && (
+                  <button className="btn-primary" onClick={abrirModalCrearCabana}>
+                    ➕ Nueva Cabaña
+                  </button>
+                )}
               </div>
               <TablaCabana
                 cabanas={cabanas}
-                onEditar={abrirModalEditarCabana}
-                onEliminar={eliminarCabana}
+                onEditar={readOnly ? null : abrirModalEditarCabana}
+                onEliminar={(modoTesorero || readOnly) ? null : eliminarCabana}
               />
             </div>
           )}
@@ -1300,14 +1345,16 @@ const Dashboard = ({ usuario, onCerrarSesion }) => {
             <div className="seccion-usuarios">
               <div className="seccion-header">
                 <h2>Gestión de Reservas</h2>
-                <button className="btn-primary" onClick={abrirModalCrearReserva}>
-                  ➕ Nueva Reserva
-                </button>
+                {(canCreate && !readOnly) && (
+                  <button className="btn-primary" onClick={abrirModalCrearReserva}>
+                    ➕ Nueva Reserva
+                  </button>
+                )}
               </div>
               <TablaReservas
                 reservas={reservas}
-                onEditar={abrirModalEditarReserva}
-                onEliminar={eliminarReserva}
+                onEditar={(canEdit && !readOnly) ? abrirModalEditarReserva : null}
+                onEliminar={(canDelete && !modoTesorero && !readOnly) ? eliminarReserva : null}
               />
             </div>
           )}

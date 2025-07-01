@@ -68,7 +68,9 @@ const TablaUnificadaSolicitudes = ({
                 
             <td>
               <button className="btn-editar" onClick={() => abrirModalEditarSolicitud(sol)}>✏️</button>
-              <button className="btn-eliminar" onClick={() => eliminarSolicitud(sol._id)}>🗑️</button>
+              {eliminarSolicitud && (
+                <button className="btn-eliminar" onClick={() => eliminarSolicitud(sol._id)}>🗑️</button>
+              )}
             </td>
           </tr>
         ))}

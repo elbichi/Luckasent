@@ -37,9 +37,11 @@ const CabanaTabla = ({cabanas, onEditar, onEliminar }) => (
                 <button className="btn-editar" onClick={() => onEditar(cabana)}>
                   ✏️
                 </button>
-                <button className="btn-eliminar" onClick={() => onEliminar(cabana._id)}>
-                  🗑️
-                </button>
+                {onEliminar && (
+                  <button className="btn-eliminar" onClick={() => onEliminar(cabana._id)}>
+                    🗑️
+                  </button>
+                )}
               </td>
             </tr>
           ))

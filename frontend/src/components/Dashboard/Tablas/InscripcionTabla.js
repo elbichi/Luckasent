@@ -42,7 +42,9 @@ const TablaInscripciones = ({ inscripciones, onEditar, onEliminar }) => (
               <td>{ins.solicitud?._id || ins.solicitud || ""}</td>
               <td>
                 <button className="btn-editar" onClick={() => onEditar(ins)}>✏️</button>
-                <button className="btn-eliminar" onClick={() => onEliminar(ins._id)}>🗑️</button>
+                {onEliminar && (
+                  <button className="btn-eliminar" onClick={() => onEliminar(ins._id)}>🗑️</button>
+                )}
               </td>
             </tr>
           ))

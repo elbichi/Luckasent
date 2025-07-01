@@ -140,7 +140,7 @@ const InscripcionModal = ({
           <option value="">Seleccione...</option>
           <option value="Cédula de ciudadanía">Cédula de ciudadanía</option>
           <option value="Cédula de extranjería">Cédula de extranjería</option>
-          <option value="pasaportePasaporte">Pasaporte</option>
+          <option value="Pasaporte">Pasaporte</option>
           <option value="Tarjeta de identidad">Tarjeta de identidad</option>
         </select>
       </div>

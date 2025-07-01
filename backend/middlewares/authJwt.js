@@ -22,7 +22,7 @@ const verifyTokenFn = (req, res, next) => {
         const decoded = jwt.verify(token, config.secret);
         req.userId = decoded.id;
         req.userRole = decoded.role;
-        console.log('[AudhJWT] Token valido para:', decoded.email);
+        console.log('[AudhJWT] Token valido para usuario ID:', decoded.id, 'Role:', decoded.role);
         next();
     } catch (error) {
         console.error('[AuthJWT] Error :', error.name, '_', error.message);

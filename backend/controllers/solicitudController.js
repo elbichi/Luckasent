@@ -131,11 +131,39 @@ exports.obtenerSolicitudes = async (req, res) => {
         });
       }
 
+      // Validación personalizada para modeloReferencia y referencia
+      const { tipoSolicitud, modeloReferencia, referencia } = req.body;
+      
+      if ((tipoSolicitud === 'Inscripción' || tipoSolicitud === 'Hospedaje')) {
+        if (!modeloReferencia) {
+          return res.status(400).json({
+            success: false,
+            message: 'modeloReferencia es requerido para solicitudes de Inscripción y Hospedaje'
+          });
+        }
+        
+        if (tipoSolicitud === 'Inscripción' && modeloReferencia !== 'Eventos') {
+          return res.status(400).json({
+            success: false,
+            message: 'Para solicitudes de Inscripción, modeloReferencia debe ser "Eventos"'
+          });
+        }
+        
+        if (tipoSolicitud === 'Hospedaje' && modeloReferencia !== 'Cabana') {
+          return res.status(400).json({
+            success: false,
+            message: 'Para solicitudes de Hospedaje, modeloReferencia debe ser "Cabana"'
+          });
+        }
+      }
+
       const nuevaSolicitud = new Solicitud({
         solicitante: req.body.solicitante,
         correo: req.body.correo,
         telefono: req.body.telefono,
         tipoSolicitud: req.body.tipoSolicitud,
+        modeloReferencia: req.body.modeloReferencia,
+        referencia: req.body.referencia,
         categoria: req.body.categoria,
         descripcion: req.body.descripcion,
         estado: req.body.estado || 'Nueva',

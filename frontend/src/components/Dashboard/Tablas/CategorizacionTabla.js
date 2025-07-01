@@ -30,7 +30,9 @@ const TablaCategorias = ({ categorias, onEditar, onEliminar }) => (
               <td>
                 <div className="acciones-botones">
                   <button className="btn-editar" onClick={() => onEditar(cat)}>✏️</button>
-                  <button className="btn-eliminar" onClick={() => onEliminar(cat._id)}>🗑️</button>
+                  {onEliminar && (
+                    <button className="btn-eliminar" onClick={() => onEliminar(cat._id)}>🗑️</button>
+                  )}
                 </div>
               </td>
             </tr>

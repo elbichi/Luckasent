@@ -52,9 +52,11 @@ const TablaReservas = ({ reservas, onEditar, onEliminar }) => (
                 <button className="btn-editar" onClick={() => onEditar(reserva)}>
                   ✏️
                 </button>
-                <button className="btn-eliminar" onClick={() => onEliminar(reserva._id)}>
-                  🗑️
-                </button>
+                {onEliminar && (
+                  <button className="btn-eliminar" onClick={() => onEliminar(reserva._id)}>
+                    🗑️
+                  </button>
+                )}
               </td>
             </tr>
           ))

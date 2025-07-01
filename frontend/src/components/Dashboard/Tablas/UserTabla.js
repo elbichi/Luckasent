@@ -50,7 +50,9 @@ const TablaUsuarios = ({ usuarios, onEditar, onEliminar }) => (
               <td>
                 <div className="acciones-botones">
                   <button className="btn-editar" onClick={() => onEditar(user)}>✏️</button>
-                  <button className="btn-eliminar" onClick={() => onEliminar(user._id)}>🗑️</button>
+                  {onEliminar && (
+                    <button className="btn-eliminar" onClick={() => onEliminar(user._id)}>🗑️</button>
+                  )}
                 </div>
               </td>
             </tr>

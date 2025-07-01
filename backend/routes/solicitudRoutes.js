@@ -24,6 +24,14 @@ const validarSolicitud = [
   body('tipoSolicitud')
     .isIn(['Inscripción', 'Hospedaje', 'Alimentación', 'Transporte', 'Certificados', 'Administrativa', 'Otra'])
     .withMessage('Tipo de solicitud inválido'),
+  body('modeloReferencia')
+    .optional()
+    .isIn(['Eventos', 'Cabana', 'Inscripcion', 'Reserva'])
+    .withMessage('Modelo de referencia debe ser Eventos, Cabana, Inscripcion o Reserva'),
+  body('referencia')
+    .optional()
+    .isMongoId()
+    .withMessage('ID de referencia inválido'),
   body('categoria')
     .isMongoId()
     .withMessage('ID de categoría inválido'),
@@ -52,14 +60,14 @@ router.get('/usuario/mis-solicitudes', solicitudController.obtenerSolicitudesPor
 router.get('/unificado', async (req, res) => {
   try {
     const solicitudes = await Solicitud.find()
-      .populate('solicitante', 'username email')
+      .populate('solicitante', 'nombre apellido correo')
       .populate('categoria', 'nombre descripcion codigo')
-      .populate('responsable', 'username email')
+      .populate('responsable', 'nombre apellido correo')
       .lean();
 
     const inscripciones = await Inscripcion.find()
-      .populate('usuario', 'username email')
-      .populate('evento', 'name')
+      .populate('usuario', 'nombre apellido correo')
+      .populate('evento', 'nombre')
       .populate('categoria', 'nombre descripcion codigo')
       .lean();
 
@@ -82,14 +90,14 @@ router.get('/unificado', async (req, res) => {
 });
 
 // Rutas de consulta - Solo admin y tesorero
-router.get('/', role.checkRole('admin', 'tesorero'), solicitudController.obtenerSolicitudes);
-router.get('/:id', role.checkRole('admin', 'tesorero'), validarId, solicitudController.obtenerSolicitudPorId);
+router.get('/', role.checkRole('admin', 'tesorero','seminarista'), solicitudController.obtenerSolicitudes);
+router.get('/:id', role.checkRole('admin', 'tesorero','seminarista'), validarId, solicitudController.obtenerSolicitudPorId);
 
-// Rutas de creación - Todos los roles pueden crear solicitudes
-router.post('/', validarSolicitud, solicitudController.crearSolicitud);
+// Rutas de creación - Admin, tesorero y seminarista pueden crear solicitudes
+router.post('/', role.checkRole('admin', 'tesorero', 'seminarista'), validarSolicitud, solicitudController.crearSolicitud);
 
 // Rutas de modificación - Solo admin y tesorero
-router.put('/:id', role.checkRole('admin', 'tesorero'), validarId, validarSolicitud, solicitudController.actualizarSolicitud);
+router.put('/:id', role.checkRole('admin', 'tesorero', 'seminarista'), validarId, validarSolicitud, solicitudController.actualizarSolicitud);
 
 // Rutas de eliminación - Solo admin
 router.delete('/:id', role.isAdmin, validarId, solicitudController.eliminarSolicitud);

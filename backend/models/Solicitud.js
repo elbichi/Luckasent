@@ -23,9 +23,20 @@ const solicitudSchema = new mongoose.Schema({
     enum: ['Inscripción', 'Hospedaje', 'Alimentación', 'Transporte', 'Certificados', 'Administrativa', 'Otra'],
     required: true
   },
+  modeloReferencia: {
+    type: String,
+    enum: ['Eventos', 'Cabana', 'Inscripcion', 'Reserva'],
+    required: function () {
+      return this.tipoSolicitud === 'Inscripción' || this.tipoSolicitud === 'Hospedaje';
+    }
+  },
+  referencia: {
+    type: mongoose.Schema.Types.ObjectId,
+    refPath: 'modeloReferencia'
+  },
   categoria: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Categorizacion', // Referencia a la colección de categorías
+    ref: 'Categorizacion',
     required: true
   },
   descripcion: {
@@ -58,7 +69,7 @@ const solicitudSchema = new mongoose.Schema({
   },
   responsable: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'usuarios', // Persona o rol que lo envió
+    ref: 'usuarios',
     required: true
   },
   creadoPor: {

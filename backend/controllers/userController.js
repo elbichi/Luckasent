@@ -1,6 +1,7 @@
 const { connect } = require('mongoose');
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
+const { normalizeTipoDocumento } = require('../utils/userValidation');
 //const { use } = require('react');
 
 //Obtener todos los usuarios (Solo Admin)
@@ -23,6 +24,10 @@ exports.getAllUsers = async (req, res)=>{
 //Obtener usuario espesifico
 exports.getUserById = async(req, res)=>{
     try{
+        console.log('[CONTROLLER] getUserById - req.userId:', req.userId);
+        console.log('[CONTROLLER] getUserById - req.userRole:', req.userRole);
+        console.log('[CONTROLLER] getUserById - params.id:', req.params.id);
+        
         const user = await User.findById(req.params.id).select('-password');      
         
         if (!user){
@@ -31,23 +36,31 @@ exports.getUserById = async(req, res)=>{
                 message:'Usuario no encontrado'
             });
         }
-        // Validaciones de acceso
-        if (req.userRole === 'tesorero' && req.userId !== user._id.toString()){
-            return res.status(403).json({
-                success: false,
-                message:'No puedes ver usuario admin'
+        
+        console.log('[CONTROLLER] getUserById - user._id:', user._id.toString());
+        
+        // Los administradores y tesoreros pueden ver cualquier usuario
+        if (req.userRole === 'admin' || req.userRole === 'tesorero') {
+            console.log('[CONTROLLER] Acceso permitido -', req.userRole, 'puede ver cualquier usuario');
+            return res.status(200).json({
+                success: true,
+                user
             });
         }
+        
+        // Validaciones de acceso para otros roles (solo pueden ver su propio perfil)
         if (req.userRole === 'externo' && req.userId !== user._id.toString()){
+            console.log('[CONTROLLER] Acceso denegado - externo intentando ver otro usuario');
             return res.status(403).json({
                 success: false,
-                message:'No puedes ver usuario admin'
+                message:'No puedes ver otro usuario'
             });
         }
         if (req.userRole === 'seminarista' && req.userId !== user._id.toString()){
+            console.log('[CONTROLLER] Acceso denegado - seminarista intentando ver otro usuario');
             return res.status(403).json({
                 success: false,
-                message:'No puedes ver usuario admin'
+                message:'No puedes ver otro usuario'
             });
         }
         
@@ -68,12 +81,15 @@ exports.createUser = async (req, res )=> {
     try{
         const {nombre, apellido, correo,telefono,tipoDocumento,numeroDocumento,estado, password,role} = req.body;
 
+        // Normalizar el tipo de documento
+        const tipoDocumentoNormalizado = normalizeTipoDocumento(tipoDocumento);
+
         const user = new User({
             nombre,
             apellido,
             correo,
             telefono,
-            tipoDocumento,
+            tipoDocumento: tipoDocumentoNormalizado,
             numeroDocumento,
             estado,
             password: await bcrypt.hash(password,10),
@@ -106,6 +122,11 @@ exports.createUser = async (req, res )=> {
 // axtualixar usuario (admin y coordinador)
 exports.updateUser = async(req, res)=>{
     try{
+        // Normalizar el tipo de documento si está presente en la actualización
+        if (req.body.tipoDocumento) {
+            req.body.tipoDocumento = normalizeTipoDocumento(req.body.tipoDocumento);
+        }
+
         const updatedUser = await User.findByIdAndUpdate(req.params.id,
             {$set :req.body},
             {new: true}

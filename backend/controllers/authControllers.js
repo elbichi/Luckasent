@@ -2,6 +2,7 @@ const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const config = require('../config/auth.config');
+const { normalizeTipoDocumento } = require('../utils/userValidation');
 
 
 //roles del sistema 
@@ -30,13 +31,16 @@ exports.signup = async (req, res) => {
       });
     }
 
+    // Normalizar el tipo de documento
+    const tipoDocumentoNormalizado = normalizeTipoDocumento(req.body.tipoDocumento);
+
     // Crear instancia de usuario
     const user = new User({
       nombre: req.body.nombre.trim(),
       apellido: req.body.apellido.trim(),
       correo: req.body.correo.toLowerCase().trim(),
       telefono: req.body.telefono.trim(),
-      tipoDocumento: req.body.tipoDocumento.trim(),
+      tipoDocumento: tipoDocumentoNormalizado,
       numeroDocumento: req.body.numeroDocumento.trim(),
       password: req.body.password,
       role: req.body.role || 'externo'

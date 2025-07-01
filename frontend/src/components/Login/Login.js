@@ -18,7 +18,20 @@ const Login = () => {
     try {
       const data = await authService.login(correo, password);
       localStorage.setItem('token', data.token);
-      navigate('/admin/users');
+      localStorage.setItem('usuario', JSON.stringify(data.user));
+      
+      // Redireccionar según el rol del usuario
+      if (data.user.role === 'admin') {
+        navigate('/admin/users');
+      } else if (data.user.role === 'tesorero') {
+        navigate('/tesorero/dashboard');
+      } else if (data.user.role === 'seminarista') {
+        navigate('/seminarista/dashboard');
+      } else if (data.user.role === 'externo') {
+        navigate('/externo/dashboard');
+      } else {
+        navigate('/admin/users'); // Por defecto para otros roles
+      }
     } catch (err) {
       setError(err.message || 'Error al iniciar sesión');
     }

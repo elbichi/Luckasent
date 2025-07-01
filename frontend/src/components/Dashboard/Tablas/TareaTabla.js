@@ -58,9 +58,11 @@ const TablaTareas = ({ tareas = [], onEditar, onEliminar, onCambiarEstado }) => 
                   <button className="btn-editar" onClick={() => onEditar(tarea)}>
                     ✏️
                   </button>
-                  <button className="btn-eliminar" onClick={() => onEliminar(tarea._id)}>
-                    🗑️
-                  </button>
+                  {onEliminar && (
+                    <button className="btn-eliminar" onClick={() => onEliminar(tarea._id)}>
+                      🗑️
+                    </button>
+                  )}
                 </div>
               </td>
             </tr>

@@ -59,7 +59,9 @@ const TablaEventos = ({ eventos, onEditar, onEliminar, onDeshabilitar }) => (
                 <div className="acciones-botones">
                   <button className="btn-editar" onClick={() => onEditar(evento)}>✏️</button>
                   <button className="btn-warning" onClick={() => onDeshabilitar(evento._id)}>⏸️</button>
-                  <button className="btn-eliminar" onClick={() => onEliminar(evento._id)}>🗑️</button>
+                  {onEliminar && (
+                    <button className="btn-eliminar" onClick={() => onEliminar(evento._id)}>🗑️</button>
+                  )}
                 </div>
               </td>
             </tr>
