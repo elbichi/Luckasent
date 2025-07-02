@@ -1,23 +1,28 @@
 import React from "react";
-const TablaCategorias = ({ categorias, onEditar, onEliminar }) => (
-  <div className="tabla-contenedor">
-    <table className="tabla-usuarios">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Nombre</th>
-          <th>Descripción</th>
-          <th>Estado</th>
-          <th>Acciones</th>
-        </tr>
-      </thead>
-      <tbody>
-        {categorias.length === 0 ? (
+
+const TablaCategorias = ({ categorias, onEditar, onEliminar }) => {
+  // Manejar el caso donde categorias es undefined, null o no es un array
+  const listaCategorias = Array.isArray(categorias) ? categorias : [];
+
+  return (
+    <div className="tabla-contenedor">
+      <table className="tabla-usuarios">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Descripción</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {listaCategorias.length === 0 ? (
           <tr>
             <td colSpan={5}>No hay categorías para mostrar</td>
           </tr>
         ) : (
-          categorias.map((cat) => (
+          listaCategorias.map((cat) => (
             <tr key={cat._id}>
               <td>{cat._id}</td>
               <td>{cat.nombre}</td>
@@ -41,6 +46,7 @@ const TablaCategorias = ({ categorias, onEditar, onEliminar }) => (
       </tbody>
     </table>
   </div>
-);
+  );
+};
 
 export default TablaCategorias;

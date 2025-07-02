@@ -1,32 +1,36 @@
 import React from "react";
 
-const TablaInscripciones = ({ inscripciones, onEditar, onEliminar }) => (
-  <div className="tabla-contenedor">
-    <table className="tabla-usuarios">
-      <thead>
-        <tr>
-          <th>ID Inscripción</th>
-          <th>Nombre completo</th>
-          <th>Tipo de Docuemnto</th>
-          <th>numero de Docuemnto </th>
-          <th>Telefono</th>
-          <th>Edad</th>
-          <th>Categoria</th>
-          <th>evento</th>
-          <th>Observaciones</th>
-          <th>Fecha de inscripcion</th>
-          <th>Estado de la inscripción</th>
-          <th>Solicitud</th>
-          <th>Acciones</th>
-        </tr>
-      </thead>
-      <tbody>
-        {inscripciones.length === 0 ? (
+const TablaInscripciones = ({ inscripciones, onEditar, onEliminar }) => {
+  // Manejar el caso donde inscripciones es undefined, null o no es un array
+  const listaInscripciones = Array.isArray(inscripciones) ? inscripciones : [];
+
+  return (
+    <div className="tabla-contenedor">
+      <table className="tabla-usuarios">
+        <thead>
           <tr>
-            <td colSpan={10}>No hay inscripciones para mostrar</td>
+            <th>ID Inscripción</th>
+            <th>Nombre completo</th>
+            <th>Tipo de Documento</th>
+            <th>Número de Documento</th>
+            <th>Teléfono</th>
+            <th>Edad</th>
+            <th>Categoría</th>
+            <th>Evento</th>
+            <th>Observaciones</th>
+            <th>Fecha de inscripción</th>
+            <th>Estado de la inscripción</th>
+            <th>Solicitud</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {listaInscripciones.length === 0 ? (
+          <tr>
+            <td colSpan={13}>No hay inscripciones para mostrar</td>
           </tr>
         ) : (
-          inscripciones.map((ins) => (
+          listaInscripciones.map((ins) => (
             <tr key={ins._id}>
               <td>{ins._id}</td>
               <td>{(ins.nombre && ins.apellido) ? `${ins.nombre} ${ins.apellido}` : ins.nombre || ins.apellido || "N/A"}</td>
@@ -52,6 +56,7 @@ const TablaInscripciones = ({ inscripciones, onEditar, onEliminar }) => (
       </tbody>
     </table>
   </div>
-);
+  );
+};
 
 export default TablaInscripciones;

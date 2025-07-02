@@ -1,28 +1,32 @@
 import React from "react";
 
-const TablaReservas = ({ reservas, onEditar, onEliminar }) => (
-  <div className="tabla-contenedor">
-    <table className="tabla-usuarios">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Usuario</th>
-          <th>Cabaña</th>
-          <th>Fecha Inicio</th>
-          <th>Fecha Fin</th>
-          <th>Estado</th>
-          <th>Observaciones</th>
-          <th>Solicitud</th>
-          <th>Acciones</th>
-        </tr>
-      </thead>
-      <tbody>
-        {reservas.length === 0 ? (
+const TablaReservas = ({ reservas, onEditar, onEliminar }) => {
+  // Manejar el caso donde reservas es undefined, null o no es un array
+  const listaReservas = Array.isArray(reservas) ? reservas : [];
+
+  return (
+    <div className="tabla-contenedor">
+      <table className="tabla-usuarios">
+        <thead>
           <tr>
-            <td colSpan={8}>No hay reservas para mostrar</td>
+            <th>ID</th>
+            <th>Usuario</th>
+            <th>Cabaña</th>
+            <th>Fecha Inicio</th>
+            <th>Fecha Fin</th>
+            <th>Estado</th>
+            <th>Observaciones</th>
+            <th>Solicitud</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {listaReservas.length === 0 ? (
+          <tr>
+            <td colSpan={9}>No hay reservas para mostrar</td>
           </tr>
         ) : (
-          reservas.map((reserva) => (
+          listaReservas.map((reserva) => (
             <tr key={reserva._id}>
               <td>{reserva._id}</td>
               <td>
@@ -38,9 +42,7 @@ const TablaReservas = ({ reservas, onEditar, onEliminar }) => (
               <td>{reserva.fechaInicio ? new Date(reserva.fechaInicio).toLocaleDateString() : ""}</td>
               <td>{reserva.fechaFin ? new Date(reserva.fechaFin).toLocaleDateString() : ""}</td>
              <td>
-                {typeof reserva.categoria === "object"
-                  ? reserva.categoria?.nombre || reserva.categoria?._id || "N/A"
-                  : reserva.categoria || "N/A"}
+                {reserva.estado || "Pendiente"}
               </td>
               <td>{reserva.observaciones}</td>
               <td>
@@ -64,6 +66,7 @@ const TablaReservas = ({ reservas, onEditar, onEliminar }) => (
       </tbody>
     </table>
   </div>
-);
+  );
+};
 
 export default TablaReservas;

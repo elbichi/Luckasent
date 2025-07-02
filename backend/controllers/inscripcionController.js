@@ -111,12 +111,26 @@ exports.crearInscripcion = async (req, res) => {
 // Obtener todas las inscripciones
 exports.obtenerInscripciones = async (req, res) => {
   try {
-    const inscripciones = await Inscripcion.find()
+    console.log('[INSCRIPCIONES] Usuario:', req.userId, 'Rol:', req.userRole);
+    
+    let filtro = {};
+    
+    // Si es seminarista o externo, solo puede ver sus propias inscripciones
+    if (req.userRole === 'seminarista' || req.userRole === 'externo') {
+      filtro.usuario = req.userId;
+      console.log('[INSCRIPCIONES] Filtrando por usuario:', req.userId);
+    }
+    // Admin y tesorero pueden ver todas las inscripciones
+    
+    const inscripciones = await Inscripcion.find(filtro)
       .populate('usuario', 'nombre apellido correo')
-      .populate('evento', 'nombre fecha')
+      .populate('evento', 'nombre fecha lugar descripcion')
       .populate('categoria', 'nombre descripcion codigo');
+      
+    console.log('[INSCRIPCIONES] Encontradas:', inscripciones.length);
     res.json({ success: true, data: inscripciones });
   } catch (error) {
+    console.error('[INSCRIPCIONES] Error:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };

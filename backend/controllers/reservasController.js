@@ -104,11 +104,25 @@ exports.crearReserva = async (req, res) => {
 // Obtener todas las reservas
 exports.obtenerReservas = async (req, res) => {
   try {
-    const reservas = await Reserva.find()
+    console.log('[RESERVAS] Usuario:', req.userId, 'Rol:', req.userRole);
+    
+    let filtro = {};
+    
+    // Si es seminarista o externo, solo puede ver sus propias reservas
+    if (req.userRole === 'seminarista' || req.userRole === 'externo') {
+      filtro.usuario = req.userId;
+      console.log('[RESERVAS] Filtrando por usuario:', req.userId);
+    }
+    // Admin y tesorero pueden ver todas las reservas
+    
+    const reservas = await Reserva.find(filtro)
       .populate('usuario', 'nombre apellido correo')
-      .populate('cabana', 'nombre descripcion capacidad categoria estado');
+      .populate('cabana', 'nombre descripcion capacidad categoria estado ubicacion');
+      
+    console.log('[RESERVAS] Encontradas:', reservas.length);
     res.json({ success: true, data: reservas });
   } catch (error) {
+    console.error('[RESERVAS] Error:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };

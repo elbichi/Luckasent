@@ -4,6 +4,8 @@ const { validationResult } = require('express-validator');
 // Obtener todas las solicitudes con filtros
 exports.obtenerSolicitudes = async (req, res) => {
     try {
+      console.log('[SOLICITUDES] Usuario:', req.userId, 'Rol:', req.userRole);
+      
       const { 
         categoria, 
         estado, 
@@ -19,6 +21,13 @@ exports.obtenerSolicitudes = async (req, res) => {
 
       // Construir filtros
       const filtros = {};
+      
+      // Si es seminarista o externo, solo puede ver sus propias solicitudes
+      if (req.userRole === 'seminarista' || req.userRole === 'externo') {
+        filtros.solicitante = req.userId;
+        console.log('[SOLICITUDES] Filtrando por solicitante:', req.userId);
+      }
+      // Admin y tesorero pueden ver todas las solicitudes
       
       if (categoria && categoria !== 'todas') filtros.categoria = categoria;
       if (estado && estado !== 'todos') filtros.estado = estado;

@@ -1,30 +1,34 @@
 import React from "react";
 
-const TablaUsuarios = ({ usuarios, onEditar, onEliminar }) => (
-  <div className="tabla-contenedor">
-    <table className="tabla-usuarios">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Nombre</th>
-          <th>Apellido</th>
-          <th>Correo</th>
-          <th>Teléfono</th>
-          <th>Tipo de Documento</th>
-          <th>Número de Documento</th>
-          <th>Rol</th>
-          <th>Estado</th>
-          <th>Fecha Registro</th>
-          <th>Acciones</th>
-        </tr>
-      </thead>
-      <tbody>
-        {usuarios.length === 0 ? (
+const TablaUsuarios = ({ usuarios, onEditar, onEliminar }) => {
+  // Manejar el caso donde usuarios es undefined, null o no es un array
+  const listaUsuarios = Array.isArray(usuarios) ? usuarios : [];
+
+  return (
+    <div className="tabla-contenedor">
+      <table className="tabla-usuarios">
+        <thead>
           <tr>
-            <td colSpan={9}>No hay usuarios para mostrar</td>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Apellido</th>
+            <th>Correo</th>
+            <th>Teléfono</th>
+            <th>Tipo de Documento</th>
+            <th>Número de Documento</th>
+            <th>Rol</th>
+            <th>Estado</th>
+            <th>Fecha Registro</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {listaUsuarios.length === 0 ? (
+          <tr>
+            <td colSpan={11}>No hay usuarios para mostrar</td>
           </tr>
         ) : (
-          usuarios.map((user) => (
+          listaUsuarios.map((user) => (
             <tr key={user._id}>
               <td>{user._id}</td>
               <td>
@@ -61,6 +65,7 @@ const TablaUsuarios = ({ usuarios, onEditar, onEliminar }) => (
       </tbody>
     </table>
   </div>
-);
+  );
+};
 
 export default TablaUsuarios;

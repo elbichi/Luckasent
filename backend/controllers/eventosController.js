@@ -8,28 +8,15 @@ exports.getAllEvents = async (req, res) => {
   try {
     console.log('[EVENTOS] Consultando eventos para usuario:', req.userRole, 'ID:', req.userId);
     
-    // Primero verificar cuántos eventos hay en total
-    const totalEvents = await Evento.countDocuments();
-    console.log('[EVENTOS] Total de eventos en BD:', totalEvents);
-    
-    // Verificar cuántos eventos activos hay
-    const activeEvents = await Evento.countDocuments({ active: true });
-    console.log('[EVENTOS] Eventos activos:', activeEvents);
-    
-    // Si no hay eventos activos, mostrar algunos eventos sin filtro para debug
-    if (activeEvents === 0 && totalEvents > 0) {
-      const allEvents = await Evento.find().limit(5);
-      console.log('[EVENTOS] Muestra de eventos (cualquier estado):', allEvents.map(e => ({
-        id: e._id,
-        nombre: e.nombre,
-        active: e.active
-      })));
+    // Para seminaristas, solo mostrar eventos activos
+    // Para admin y tesorero, mostrar todos los eventos
+    let filtro = {};
+    if (req.userRole === 'seminarista') {
+      filtro = { active: true };
     }
     
-    // TEMPORAL: Mostrar todos los eventos independientemente del estado active
-    // Cambiar de: { active: true } a: {} para mostrar todos
-    const events = await Evento.find({}).populate('categoria');
-    console.log('[EVENTOS] Eventos encontrados después del populate:', events.length);
+    const events = await Evento.find(filtro).populate('categoria');
+    console.log('[EVENTOS] Eventos encontrados para rol', req.userRole, ':', events.length);
     
     res.status(200).json({ success: true, data: events });
   } catch (error) {
@@ -299,22 +286,21 @@ exports.getEventosPorCategoria = async (req, res) => {
   }
 };
 
-// Función temporal para activar todos los eventos
+// Función temporal para activar todos los eventos (solo para testing)
 exports.activarTodosLosEventos = async (req, res) => {
   try {
     console.log('[EVENTOS] Activando todos los eventos...');
+    const result = await Evento.updateMany({}, { active: true });
+    console.log('[EVENTOS] Eventos actualizados:', result.modifiedCount);
     
-    const result = await Evento.updateMany(
-      { active: false },
-      { $set: { active: true } }
-    );
+    // Contar eventos activos después de la actualización
+    const eventosActivos = await Evento.countDocuments({ active: true });
+    console.log('[EVENTOS] Total de eventos activos ahora:', eventosActivos);
     
-    console.log('[EVENTOS] Eventos activados:', result.modifiedCount);
-    
-    res.status(200).json({
-      success: true,
-      message: `Se activaron ${result.modifiedCount} eventos`,
-      data: result
+    res.status(200).json({ 
+      success: true, 
+      message: `Se activaron ${result.modifiedCount} eventos. Total activos: ${eventosActivos}`,
+      data: { modified: result.modifiedCount, totalActive: eventosActivos }
     });
   } catch (error) {
     console.error('[EVENTOS] Error al activar eventos:', error);

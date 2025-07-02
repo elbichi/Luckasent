@@ -96,9 +96,22 @@ exports.getReservasReport = async (req, res) => {
       ]),
       ingresosPotenciales: await Reserva.aggregate([
         { $match: filtros },
-        { $lookup: { from: 'cabanas', localField: 'cabana', foreignField: '_id', as: 'cabanaInfo' } },
-        { $unwind: '$cabanaInfo' },
-        { $group: { _id: null, total: { $sum: '$cabanaInfo.precio' } } }
+        { 
+          $addFields: { 
+            noches: { 
+              $divide: [
+                { $subtract: ["$fechaFin", "$fechaInicio"] },
+                1000 * 60 * 60 * 24
+              ]
+            }
+          }
+        },
+        { 
+          $addFields: { 
+            ingresoReserva: { $multiply: ["$noches", 14000] }
+          }
+        },
+        { $group: { _id: null, total: { $sum: "$ingresoReserva" } } }
       ])
     };
 
@@ -385,14 +398,27 @@ exports.getReporteFinanciero = async (req, res) => {
     // Ingresos por reservas
     const ingresosCabanas = await Reserva.aggregate([
       { $match: filtrosFecha },
-      { $lookup: { from: 'cabanas', localField: 'cabana', foreignField: '_id', as: 'cabanaInfo' } },
-      { $unwind: '$cabanaInfo' },
+      { 
+        $addFields: { 
+          noches: { 
+            $divide: [
+              { $subtract: ["$fechaFin", "$fechaInicio"] },
+              1000 * 60 * 60 * 24
+            ]
+          }
+        }
+      },
+      { 
+        $addFields: { 
+          ingresoReserva: { $multiply: ["$noches", 14000] }
+        }
+      },
       {
         $group: {
           _id: null,
           totalReservas: { $sum: 1 },
-          ingresoTotal: { $sum: '$cabanaInfo.precio' },
-          promedioPorReserva: { $avg: '$cabanaInfo.precio' }
+          ingresoTotal: { $sum: '$ingresoReserva' },
+          promedioPorReserva: { $avg: '$ingresoReserva' }
         }
       }
     ]);

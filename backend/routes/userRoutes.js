@@ -22,9 +22,27 @@ router.use(authJwt.verifyToken);
 router.get('/', role.checkRole('admin', 'tesorero'), userController.getAllUsers);
 router.get('/:id', role.checkRole('admin', 'tesorero'), userController.getUserById);
 
-// Rutas de creación y modificación (admin y tesorero)
+// Rutas de creación y modificación 
 router.post('/', role.checkRole('admin', 'tesorero'), userController.createUser);
-router.put('/:id', role.checkRole('admin', 'tesorero'), userController.updateUser);
+
+// Ruta especial para actualizar perfil propio (cualquier usuario autenticado puede actualizar su propio perfil)
+router.put('/:id', (req, res, next) => {
+    // Si es admin o tesorero, puede editar cualquier usuario
+    if (req.userRole === 'admin' || req.userRole === 'tesorero') {
+        return next();
+    }
+    
+    // Si no es admin/tesorero, solo puede editar su propio perfil
+    if (req.userId === req.params.id) {
+        return next();
+    }
+    
+    console.log(`Acceso denegado: usuario ${req.userId} (${req.userRole}) intentó editar perfil ${req.params.id}`);
+    return res.status(403).json({
+        success: false,
+        message: 'Solo puedes editar tu propio perfil'
+    });
+}, userController.updateUser);
 
 // Rutas de eliminación (solo admin)
 router.delete('/:id', role.isAdmin, userController.deleteUser);
