@@ -94,10 +94,10 @@ router.get('/', role.checkRole('admin', 'tesorero','seminarista'), solicitudCont
 router.get('/:id', role.checkRole('admin', 'tesorero','seminarista'), validarId, solicitudController.obtenerSolicitudPorId);
 
 // Rutas de creación - Admin, tesorero y seminarista pueden crear solicitudes
-router.post('/', role.checkRole('admin', 'tesorero', 'seminarista'), validarSolicitud, solicitudController.crearSolicitud);
+router.post('/', role.checkRole('admin', 'tesorero', 'seminarista'), solicitudController.crearSolicitud);
 
 // Rutas de modificación - Solo admin y tesorero
-router.put('/:id', role.checkRole('admin', 'tesorero', 'seminarista'), validarId, validarSolicitud, solicitudController.actualizarSolicitud);
+router.put('/:id', role.checkRole('admin', 'tesorero', 'seminarista'), validarId, solicitudController.actualizarSolicitud);
 
 // Rutas de eliminación - Solo admin
 router.delete('/:id', role.isAdmin, validarId, solicitudController.eliminarSolicitud);

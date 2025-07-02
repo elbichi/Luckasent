@@ -45,8 +45,8 @@ exports.crearTarea = async (req, res) => {
 
         // Populamos los campos de usuario para la respuesta
         const tareaPoblada = await Tarea.findById(nuevaTarea._id)
-            .populate('asignadoA', 'username email')
-            .populate('asignadoPor', 'username email');
+            .populate('asignadoA', ' nombre role')
+            .populate('asignadoPor',' nombre role');
 
         res.status(201).json({
             success: true,
@@ -65,7 +65,9 @@ exports.crearTarea = async (req, res) => {
 // Obtener todas las tareas
 exports.obtenerTareas = async (req, res) => {
     try {
-        const tareas = await Tarea.find().populate('asignadoA');
+         const tareas = await Tarea.find()
+            .populate('asignadoA', 'username email nombre role')
+            .populate('asignadoPor', 'username email nombre role');
         res.json(tareas);
     } catch (error) {
         res.status(500).json({ message: error.message });

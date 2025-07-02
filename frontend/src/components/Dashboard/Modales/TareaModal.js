@@ -8,7 +8,8 @@ const TareaModal = ({
   nuevaTarea,
   setNuevaTarea,
   onClose,
-  onSubmit
+  onSubmit,
+  usuarios
 }) => {
   if (!mostrar) return null;
 
@@ -80,11 +81,16 @@ const TareaModal = ({
               }
               required
             >
-              
+              <option value="">Seleccione...</option>
+              {usuarios && usuarios.map(user => (
+                <option key={user._id} value={user._id}>
+                  {user.nombre} ({user.role})
+                </option>
+              ))}
             </select>
           </div>
 
-        
+
           <div className="form-grupo">
             <label>Asignado por:</label>
             <select
@@ -96,7 +102,12 @@ const TareaModal = ({
               }
               required
             >
-              
+              <option value="">Seleccione...</option>
+              {usuarios && usuarios.map(user => (
+                <option key={user._id} value={user._id}>
+                  {user.nombre} ({user.role})
+                </option>
+              ))}
             </select>
           </div>
 

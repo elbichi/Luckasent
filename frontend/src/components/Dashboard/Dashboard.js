@@ -27,7 +27,14 @@ import TablaReservas from './Tablas/ReservaTabla';
 import Reportes from "../Reportes/Reportes";
 import "./Dashboard.css";
 
+
 const Dashboard = ({ usuario: usuarioProp, onCerrarSesion: onCerrarSesionProp, modoTesorero = false, userRole, readOnly = false, canCreate = true, canEdit = true, canDelete = true }) => {
+
+  useEffect(() => {
+    obtenerEventos();
+    obtenerCategorias();
+  }, []);
+
   const [usuarioActual, setUsuarioActual] = useState(usuarioProp);
 
   // Si no se pasa usuario como prop, obtenerlo desde localStorage
@@ -78,16 +85,16 @@ const Dashboard = ({ usuario: usuarioProp, onCerrarSesion: onCerrarSesionProp, m
   //---------------------------------------------------------------------------------------------------------------
   const [solicitudes, setSolicitudes] = useState([]);
   const [nuevaSolicitud, setNuevaSolicitud] = useState({
-        solicitante: "",
-        correo: "",
-        telefono: "",
-        tipoSolicitud: "",
-        categoria: "",
-        descripcion: "",
-        estado: "Nuevo",
-        prioridad: "Media",
-        responsable: "",
-        observaciones: ""
+    solicitante: "",
+    correo: "",
+    telefono: "",
+    tipoSolicitud: "",
+    categoria: "",
+    descripcion: "",
+    estado: "Nuevo",
+    prioridad: "Media",
+    responsable: "",
+    observaciones: ""
   });
   const [modoEdicionSolicitud, setModoEdicionSolicitud] = useState(false);
   const [solicitudSeleccionada, setSolicitudSeleccionada] = useState(null);
@@ -96,20 +103,20 @@ const Dashboard = ({ usuario: usuarioProp, onCerrarSesion: onCerrarSesionProp, m
   const [modoEdicionInscripcion, setModoEdicionInscripcion] = useState(false);
   const [inscripcionSeleccionada, setInscripcionSeleccionada] = useState(null);
   const [nuevaInscripcion, setNuevaInscripcion] = useState({
-  usuario: "",
-  nombre: "",
-  apellido: "",
-  tipoDocumento: "",
-  numeroDocumento: "",
-  correo: "",
-  telefono: "",
-  edad: "",
-  evento: "",
-  categoria: "",
-  estado: "pendiente",
-  observaciones: "",
-  solicitud: ""
-});
+    usuario: "",
+    nombre: "",
+    apellido: "",
+    tipoDocumento: "",
+    numeroDocumento: "",
+    correo: "",
+    telefono: "",
+    edad: "",
+    evento: "",
+    categoria: "",
+    estado: "pendiente",
+    observaciones: "",
+    solicitud: ""
+  });
   //----------------------------------------------------------------------------------------------------------
   // Estados para eventos
   const [eventos, setEventos] = useState([]);
@@ -383,19 +390,24 @@ const Dashboard = ({ usuario: usuarioProp, onCerrarSesion: onCerrarSesionProp, m
   // Crear inscripción
   const CrearInscripcion = async () => {
     // Validación previa
-  if (
-    !nuevaInscripcion.usuario ||
-    nuevaInscripcion.usuario.length !== 24 ||
-    !nuevaInscripcion.evento ||
-    nuevaInscripcion.evento.length !== 24 ||
-    !nuevaInscripcion.categoria ||
-    nuevaInscripcion.categoria.length !== 24
-  ) {
-    alert("Debes seleccionar usuario, evento y categoría válidos.");
-    return;
-  }
+    if (
+      !nuevaInscripcion.usuario ||
+      nuevaInscripcion.usuario.length !== 24 ||
+      !nuevaInscripcion.evento ||
+      nuevaInscripcion.evento.length !== 24 ||
+      !nuevaInscripcion.categoria ||
+      nuevaInscripcion.categoria.length !== 24
+    ) {
+      alert("Debes seleccionar usuario, evento y categoría válidos.");
+      return;
+    }
     try {
-      await inscripcionService.create(nuevaInscripcion);
+      // Copia el objeto y elimina solicitud si está vacío
+      const inscripcionAEnviar = { ...nuevaInscripcion };
+      if (!inscripcionAEnviar.solicitud) {
+        delete inscripcionAEnviar.solicitud;
+      }
+      await inscripcionService.create(inscripcionAEnviar);
       alert("Inscripción creada exitosamente");
       setMostrarModal(false);
       setNuevaInscripcion({
@@ -422,17 +434,30 @@ const Dashboard = ({ usuario: usuarioProp, onCerrarSesion: onCerrarSesionProp, m
   // Actualizar inscripción
   const actualizarInscripcion = async () => {
     try {
+      // 1. Actualizar usuario relacionado
+      await userService.updateUser(
+        inscripcionSeleccionada.usuario._id ? inscripcionSeleccionada.usuario._id : inscripcionSeleccionada.usuario,
+        {
+          nombre: inscripcionSeleccionada.nombre,
+          apellido: inscripcionSeleccionada.apellido,
+          tipoDocumento: inscripcionSeleccionada.tipoDocumento,
+          numeroDocumento: inscripcionSeleccionada.numeroDocumento,
+          telefono: inscripcionSeleccionada.telefono,
+          // correo: inscripcionSeleccionada.correo,
+        }
+      );
       await inscripcionService.update(inscripcionSeleccionada._id, inscripcionSeleccionada);
-      alert("Inscripción actualizada exitosamente");
-      setMostrarModal(false);
+
+      alert("Inscripción y usuario actualizados exitosamente");
+      setMostrarModalInscripcion(false);
       setInscripcionSeleccionada(null);
       setModoEdicionInscripcion(false);
       obtenerInscripciones();
+      obtenerUsuarios(); // Refresca la lista de usuarios
     } catch (error) {
       alert(`Error: ${error.message}`);
     }
   };
-
   // Eliminar inscripción
   const eliminarInscripcion = async (id) => {
     if (!window.confirm("¿Estás seguro de que quieres eliminar esta inscripción?")) return;
@@ -449,7 +474,7 @@ const Dashboard = ({ usuario: usuarioProp, onCerrarSesion: onCerrarSesionProp, m
   const abrirModalCrearInscripcion = () => {
     setModoEdicionInscripcion(false);
     setNuevaInscripcion({
-     usuario: "",
+      usuario: "",
       nombre: "",
       apellido: "",
       tipoDocumento: "",
@@ -470,7 +495,7 @@ const Dashboard = ({ usuario: usuarioProp, onCerrarSesion: onCerrarSesionProp, m
   const abrirModalEditarInscripcion = (inscripcion) => {
     setModoEdicionInscripcion(true);
     setInscripcionSeleccionada({ ...inscripcion });
-    setMostrarModal(true);
+    setMostrarModalInscripcion(true); // <-- Cambia esto
   };
   const [inscripciones, setInscripciones] = useState([]);
   // Función para crear o actualizar inscripción (ajusta según tu lógica)
@@ -603,12 +628,8 @@ const Dashboard = ({ usuario: usuarioProp, onCerrarSesion: onCerrarSesionProp, m
     setMostrarModal(true);
   };
 
-  // Cargar eventos cuando se activa la sección
-  useEffect(() => {
-    if (seccionActiva === "eventos") {
-      obtenerEventos();
-    }
-  }, [seccionActiva]);
+
+
 
   //-----------------------------------------------------------------------------------------------------------
   // FUNCIONES PARA GESTIÓN DE TAREAS
@@ -718,20 +739,7 @@ const Dashboard = ({ usuario: usuarioProp, onCerrarSesion: onCerrarSesionProp, m
   //-----------------------------------------------------------------------------------------------------------
   const [categorias, setCategorias] = useState([]);
 
-  // Cargar categorías cuando se activa la sección de categorizacion
-  useEffect(() => {
-    if (seccionActiva === "categorizacion" || seccionActiva === "solicitudes") {
-      const cargarCategorias = async () => {
-        try {
-          const res = await categorizacionService.getAll();
-          setCategorias(res.data || []);
-        } catch (error) {
-          setCategorias([]);
-        }
-      };
-      cargarCategorias();
-    }
-  }, [seccionActiva]);
+
   const [nuevaCategoria, setNuevaCategoria] = useState({
     nombre: "",
     codigo: "",
@@ -1420,6 +1428,7 @@ const Dashboard = ({ usuario: usuarioProp, onCerrarSesion: onCerrarSesionProp, m
         setNuevaTarea={setNuevaTarea}
         onClose={() => setMostrarModal(false)}
         onSubmit={modoEdicionTarea ? actualizarTarea : crearTarea}
+        usuarios={usuarios} // <-- agrega esto
       />
       <InscripcionModal
         mostrar={mostrarModalInscripcion}
@@ -1431,7 +1440,7 @@ const Dashboard = ({ usuario: usuarioProp, onCerrarSesion: onCerrarSesionProp, m
         eventos={eventos}
         categorias={categorias}
         onClose={() => setMostrarModalInscripcion(false)}
-         onSubmit={modoEdicionInscripcion ? actualizarInscripcion : CrearInscripcion}
+        onSubmit={modoEdicionInscripcion ? actualizarInscripcion : CrearInscripcion}
       />
 
       <CabanaModal

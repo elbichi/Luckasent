@@ -11,7 +11,9 @@ const TablaTareas = ({ tareas = [], onEditar, onEliminar, onCambiarEstado }) => 
           <th>Estado</th>
           <th>Prioridad</th>
           <th>Asignado A</th>
+          <th>Asignado a Rol</th>
           <th>Asignado Por</th>
+          <th>Asignado por Rol </th>
           <th>Fecha Límite</th>
           <th>Fecha Creación</th>
           <th>Acciones</th>
@@ -27,26 +29,17 @@ const TablaTareas = ({ tareas = [], onEditar, onEliminar, onCambiarEstado }) => 
             <tr key={tarea._id}>
               <td>{tarea._id}</td>
               <td>{tarea.titulo}</td>
-              <td>{tarea.descripcion?.substring(0, 50)}...</td>
-              <td>
-                <select
-                  value={tarea.estado}
-                  onChange={(e) => onCambiarEstado(tarea._id, e.target.value)}
-                  className={`badge-estado estado-${tarea.estado?.replace(' ', '-')}`}
-                >
-                  <option value="pendiente">Pendiente</option>
-                  <option value="en progreso">En Progreso</option>
-                  <option value="completada">Completada</option>
-                  <option value="cancelada">Cancelada</option>
-                </select>
-              </td>
+              <td>{tarea.descripcion?.substring(0, 100)}...</td>
+               <td>{tarea.estado}</td>
               <td>
                 <span className={`badge-prioridad prioridad-${tarea.prioridad}`}>
                   {tarea.prioridad?.charAt(0).toUpperCase() + tarea.prioridad?.slice(1)}
                 </span>
               </td>
-              <td>{tarea.asignadoA?.username || "N/A"}</td>
-              <td>{tarea.asignadoPor?.username || "N/A"}</td>
+              <td>{tarea.asignadoA?.nombre || "N/A"}</td>
+              <td>{tarea.asignadoA?.role || "N/A"}</td>
+              <td>{tarea.asignadoPor?.nombre || "N/A"}</td>
+              <td>{tarea.asignadoPor?.role || "N/A"}</td>
               <td>
                 {tarea.fechaLimite ? new Date(tarea.fechaLimite).toLocaleDateString() : "N/A"}
               </td>
