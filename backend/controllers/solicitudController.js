@@ -418,3 +418,32 @@ exports.obtenerSolicitudesPorUsuario = async (req, res) => {
   }
 };
 
+// Obtener las solicitudes del usuario actual
+exports.obtenerMisSolicitudes = async (req, res) => {
+  try {
+    console.log('[MIS SOLICITUDES] Usuario:', req.userId);
+    
+    const solicitudes = await Solicitud.find({ solicitante: req.userId })
+      .populate('categoria', 'nombre descripcion')
+      .populate('solicitante', 'nombre apellido correo')
+      .populate('responsableAsignado', 'nombre apellido')
+      .sort({ fechaSolicitud: -1 }); // Ordenar por fecha de solicitud, más recientes primero
+      
+    console.log('[MIS SOLICITUDES] Encontradas:', solicitudes.length);
+    res.json({ 
+      success: true, 
+      data: solicitudes,
+      total: solicitudes.length,
+      page: 1,
+      pages: 1
+    });
+  } catch (error) {
+    console.error('[MIS SOLICITUDES] Error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Error interno del servidor',
+      error: error.message 
+    });
+  }
+};
+

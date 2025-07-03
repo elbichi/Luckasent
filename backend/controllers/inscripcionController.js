@@ -135,6 +135,25 @@ exports.obtenerInscripciones = async (req, res) => {
   }
 };
 
+// Obtener las inscripciones del usuario actual
+exports.obtenerMisInscripciones = async (req, res) => {
+  try {
+    console.log('[MIS INSCRIPCIONES] Usuario:', req.userId);
+    
+    const inscripciones = await Inscripcion.find({ usuario: req.userId })
+      .populate('usuario', 'nombre apellido correo')
+      .populate('evento', 'nombre fechaEvento lugar descripcion')
+      .populate('categoria', 'nombre descripcion codigo')
+      .sort({ createdAt: -1 }); // Ordenar por fecha de creación, más recientes primero
+      
+    console.log('[MIS INSCRIPCIONES] Encontradas:', inscripciones.length);
+    res.json({ success: true, data: inscripciones });
+  } catch (error) {
+    console.error('[MIS INSCRIPCIONES] Error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 // Endpoint temporal para obtener datos para crear inscripciones
 exports.obtenerDatosParaInscripcion = async (req, res) => {
   try {

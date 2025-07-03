@@ -8,6 +8,7 @@ router.use(authJwt.verifyToken);
 
 // Rutas de consulta (todos los roles autenticados)
 router.get('/', inscripcionController.obtenerInscripciones);
+router.get('/mis-inscripciones', inscripcionController.obtenerMisInscripciones);
 router.get('/datos-para-crear', inscripcionController.obtenerDatosParaInscripcion); // Ruta temporal para debug
 router.get('/:id', inscripcionController.obtenerInscripcionPorId);
 

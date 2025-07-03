@@ -2,10 +2,10 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './components/Login/Login';
 import Registro from './components/signup/registro';
-import DashboardAdmin from "./components/Dashboard/DashboardAdmin";
-import DashboardTesorero from "./components/Dashboard/DashboardTesorero";
-import DashboardSeminarista from "./components/Dashboard/DashboardSeminarista";
-import DashboardExterno from "./components/Dashboard/DashboardExterno";
+import DashboardAdmin from "./components/Dashboard/Admin/DashboardAdmin";
+import DashboardTesorero from "./components/Dashboard/Tesorero/DashboardTesorero";
+import DashboardSeminarista from "./components/Dashboard/Seminarista/DashboardSeminarista";
+import DashboardExterno from "./components/Dashboard/Externo/DashboardExterno";
 
 
 function App() {

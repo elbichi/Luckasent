@@ -8,11 +8,20 @@ const getHeaders = () => ({
 export const eventService = {
   // Obtener todos los eventos
   getAllEvents: async () => {
-    const res = await fetch(API_URL, {
-      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-    });
-    if (!res.ok) throw new Error("Error al obtener eventos");
-    return await res.json();
+    try {
+      const res = await fetch(API_URL, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+      });
+      if (!res.ok) {
+        throw new Error(`Error ${res.status}: ${res.statusText}`);
+      }
+      const data = await res.json();
+      console.log('🔍 Eventos obtenidos del servicio:', data);
+      return data;
+    } catch (error) {
+      console.error('❌ Error en eventService.getAllEvents:', error);
+      throw error;
+    }
   },
 
   // Obtener evento por ID

@@ -8,6 +8,7 @@ router.use(authJwt.verifyToken);
 
 // Rutas de consulta (todos los roles autenticados)
 router.get('/', reservasController.obtenerReservas);
+router.get('/mis-reservas', reservasController.obtenerMisReservas);
 router.get('/datos-para-crear', reservasController.obtenerDatosParaReserva); // Ruta temporal para debug
 router.get('/:id', reservasController.obtenerReservaPorId);
 

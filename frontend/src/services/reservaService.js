@@ -1,15 +1,43 @@
 const API_URL = "http://localhost:3000/api/reservas";
 
 export const reservaService = {
+  // Método para obtener todas las reservas
+  getAllReservas: async () => {
+    try {
+      const res = await fetch(API_URL, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      if (!res.ok) throw new Error("Error al obtener reservas");
+      return await res.json();
+    } catch (error) {
+      console.error('Error en getAllReservas:', error);
+      throw error;
+    }
+  },
+
+  // Método para obtener reservas del usuario actual
+  getMisReservas: async () => {
+    try {
+      const res = await fetch(`${API_URL}/mis-reservas`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      if (!res.ok) throw new Error("Error al obtener mis reservas");
+      return await res.json();
+    } catch (error) {
+      console.error('Error en getMisReservas:', error);
+      throw error;
+    }
+  },
+
+  // Mantener compatibilidad con nombres anteriores
   getAll: async () => {
-    const res = await fetch(API_URL, {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-      },
-    });
-    if (!res.ok) throw new Error("Error al obtener reservas");
-    return await res.json();
+    return await reservaService.getAllReservas();
   },
 
   getById: async (id) => {
@@ -59,5 +87,10 @@ export const reservaService = {
     });
     if (!res.ok) throw new Error("Error al eliminar reserva");
     return await res.json();
+  },
+
+  // Método para eliminar reserva (alias)
+  deleteReserva: async (id) => {
+    return await reservaService.delete(id);
   },
 };

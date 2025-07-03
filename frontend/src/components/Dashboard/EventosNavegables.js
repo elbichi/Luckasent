@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { eventService } from '../../services/eventService';
 import FormularioInscripcion from './FormularioInscripcion';
+import './Dashboard.css';
 
 const EventosNavegables = ({ onSuccess }) => {
   const [eventos, setEventos] = useState([]);
@@ -16,21 +17,25 @@ const EventosNavegables = ({ onSuccess }) => {
 
   const cargarEventos = async () => {
     try {
-      const token = localStorage.getItem('token');
+      setLoading(true);
+      setError('');
       console.log('🔍 Cargando eventos para seminarista...');
-      const response = await axios.get('http://localhost:3000/api/eventos', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
       
-      console.log('📊 Respuesta del servidor:', response.data);
-      if (response.data.success) {
-        console.log('✅ Eventos cargados:', response.data.data.length);
-        console.log('📋 Primer evento:', response.data.data[0]);
-        setEventos(response.data.data);
+      const response = await eventService.getAllEvents();
+      console.log('📊 Respuesta del servicio:', response);
+      
+      if (response.success) {
+        console.log('✅ Eventos cargados:', response.data.length);
+        if (response.data.length > 0) {
+          console.log('📋 Primer evento:', response.data[0]);
+        }
+        setEventos(response.data);
+      } else {
+        setError(response.message || 'Error al cargar eventos');
       }
     } catch (error) {
-      setError('Error al cargar eventos');
       console.error('❌ Error al cargar eventos:', error);
+      setError('Error al conectar con el servidor. Verifica tu conexión.');
     } finally {
       setLoading(false);
     }

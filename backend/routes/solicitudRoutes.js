@@ -57,6 +57,7 @@ router.use(authJwt.verifyToken);
 
 // Rutas de consulta - Todos los roles autenticados
 router.get('/usuario/mis-solicitudes', solicitudController.obtenerSolicitudesPorUsuario);
+router.get('/mis-solicitudes', solicitudController.obtenerMisSolicitudes);
 router.get('/unificado', async (req, res) => {
   try {
     const solicitudes = await Solicitud.find()

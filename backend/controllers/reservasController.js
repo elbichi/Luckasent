@@ -127,6 +127,24 @@ exports.obtenerReservas = async (req, res) => {
   }
 };
 
+// Obtener las reservas del usuario actual
+exports.obtenerMisReservas = async (req, res) => {
+  try {
+    console.log('[MIS RESERVAS] Usuario:', req.userId);
+    
+    const reservas = await Reserva.find({ usuario: req.userId })
+      .populate('usuario', 'nombre apellido correo')
+      .populate('cabana', 'nombre descripcion capacidad categoria estado ubicacion')
+      .sort({ createdAt: -1 }); // Ordenar por fecha de creación, más recientes primero
+      
+    console.log('[MIS RESERVAS] Encontradas:', reservas.length);
+    res.json({ success: true, data: reservas });
+  } catch (error) {
+    console.error('[MIS RESERVAS] Error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 // Endpoint temporal para obtener datos para crear reservas
 exports.obtenerDatosParaReserva = async (req, res) => {
   try {
