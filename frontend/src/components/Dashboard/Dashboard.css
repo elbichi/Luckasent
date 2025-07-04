@@ -1078,11 +1078,11 @@ body {
 .tabla-usuarios {
   width: 100%;
   border-collapse: collapse;
-  background: white;
+  background: rgb(255, 255, 255);
 }
 
 .tabla-usuarios th {
-  background: #f8f9fa;
+  background: #ffffff;
   padding: 15px;
   text-align: left;
   font-weight: 600;
@@ -1097,7 +1097,7 @@ body {
 }
 
 .tabla-usuarios tr:hover {
-  background: #f8f9fa;
+  background: #888686;
 }
 
 .usuario-celda {

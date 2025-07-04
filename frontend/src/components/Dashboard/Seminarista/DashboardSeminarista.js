@@ -1,31 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import NavegacionSeminarista from './NavegacionSeminarista';
-import EventosNavegables from './EventosNavegables';
-import CabanasNavegables from './CabanasNavegables';
-import FormularioReserva from './FormularioReserva';
-import ModificarPerfil from './ModificarPerfil';
-import InscripcionTablaContainer from './Tablas/InscripcionTablaContainer';
-import ReservaTablaContainer from './Tablas/ReservaTablaContainer';
-import SolicitudTabla from './Tablas/SolicitudTabla';
-import SolicitudModal from './Modales/SolicitudModal';
-import { useAuthCheck } from '../../hooks/useAuthCheck';
+import { useNavigate } from 'react-router-dom';
+import ModificarPerfil from '../ModificarPerfil';
+import { useAuthCheck } from '../../../hooks/useAuthCheck';
 
 // Modular Components
-import Header from './components/Header';
-import DashboardOverview from './components/DashboardOverview';
-import NotificationBanner from './components/NotificationBanner';
+import Header from '../Shared/Header';
+import NotificationBanner from '../Shared/NotificationBanner';
 
 import './DashboardSeminarista.css';
 
 const DashboardSeminarista = () => {
-  const [activeTab, setActiveTab] = useState('navegacion');
-  const [modalOpen, setModalOpen] = useState(false);
-  const [cabanaSeleccionada, setCabanaSeleccionada] = useState(null);
-  const [mostrarFormularioReserva, setMostrarFormularioReserva] = useState(false);
+  const navigate = useNavigate();
   const [mostrarModificarPerfil, setMostrarModificarPerfil] = useState(false);
   const [mensaje, setMensaje] = useState('');
   const [mensajeTipo, setMensajeTipo] = useState('info');
-  const [breadcrumbPath, setBreadcrumbPath] = useState(['Dashboard', 'Seminarista']);
+  const breadcrumbPath = ['Dashboard', 'Seminarista'];
   
   // Verificar autenticación y rol
   const { isAuthenticated, user } = useAuthCheck('seminarista');
@@ -47,28 +36,6 @@ const DashboardSeminarista = () => {
     return <div>Cargando...</div>;
   }
 
-  const handleTabChange = (tabId) => {
-    setActiveTab(tabId);
-    setMensaje(''); // Limpiar mensajes al cambiar de tab
-    
-    // Actualizar breadcrumb según la sección
-    const breadcrumbs = {
-      'navegacion': ['Dashboard', 'Seminarista'],
-      'eventos': ['Dashboard', 'Seminarista', 'Eventos'],
-      'cabanas': ['Dashboard', 'Seminarista', 'Cabañas'],
-      'mis-inscripciones': ['Dashboard', 'Seminarista', 'Mis Inscripciones'],
-      'mis-reservas': ['Dashboard', 'Seminarista', 'Mis Reservas'],
-      'mis-solicitudes': ['Dashboard', 'Seminarista', 'Mis Solicitudes'],
-      'crear-solicitud': ['Dashboard', 'Seminarista', 'Nueva Solicitud']
-    };
-    setBreadcrumbPath(breadcrumbs[tabId] || ['Dashboard', 'Seminarista']);
-  };
-
-  const handleReservar = (cabana) => {
-    setCabanaSeleccionada(cabana);
-    setMostrarFormularioReserva(true);
-  };
-
   const handleSuccess = (mensaje, tipo = 'success') => {
     setMensaje(mensaje);
     setMensajeTipo(tipo);
@@ -78,12 +45,8 @@ const DashboardSeminarista = () => {
     }, 5000);
   };
 
-  const handleError = (mensaje) => {
-    handleSuccess(mensaje, 'error');
-  };
-
-  const handleModificarPerfil = () => {
-    setMostrarModificarPerfil(true);
+  const handleNavigation = (route) => {
+    navigate(route);
   };
 
   const closeMensaje = () => {
@@ -92,200 +55,154 @@ const DashboardSeminarista = () => {
   };
 
   const renderContent = () => {
-    switch (activeTab) {
-      case 'eventos':
-        return (
-          <div className="seccion-usuarios">
-            <div className="seccion-header">
-              <h2>📅 Eventos Disponibles</h2>
-              <button 
-                className="btn-secondary"
-                onClick={() => setActiveTab('navegacion')}
-              >
-                ← Volver al Panel
-              </button>
-            </div>
-            <EventosNavegables onSuccess={handleSuccess} />
-          </div>
-        );
-      
-      case 'cabanas':
-        return (
-          <div className="seccion-usuarios">
-            <div className="seccion-header">
-              <h2>🏠 Cabañas Disponibles</h2>
-              <button 
-                className="btn-secondary"
-                onClick={() => setActiveTab('navegacion')}
-              >
-                ← Volver al Panel
-              </button>
-            </div>
-            <CabanasNavegables onReservar={handleReservar} />
-          </div>
-        );
-      
-      case 'mis-inscripciones':
-        return (
-          <div className="seccion-usuarios">
-            <div className="seccion-header">
-              <h2>📝 Mis Inscripciones</h2>
-              <button 
-                className="btn-secondary"
-                onClick={() => setActiveTab('navegacion')}
-              >
-                ← Volver al Panel
-              </button>
-            </div>
-            <InscripcionTablaContainer 
-              userRole="seminarista"
-              readOnly={false}
-              canCreate={true}
-              canEdit={false}
-              canDelete={false}
-              filtroUsuario={true}
-            />
-          </div>
-        );
-      
-      case 'mis-reservas':
-        return (
-          <div className="seccion-usuarios">
-            <div className="seccion-header">
-              <h2>🗓️ Mis Reservas</h2>
-              <button 
-                className="btn-secondary"
-                onClick={() => setActiveTab('navegacion')}
-              >
-                ← Volver al Panel
-              </button>
-            </div>
-            <ReservaTablaContainer 
-              userRole="seminarista"
-              readOnly={false}
-              canCreate={true}
-              canEdit={false}
-              canDelete={false}
-              filtroUsuario={true}
-            />
-          </div>
-        );
-      
-      case 'mis-solicitudes':
-        return (
-          <div className="seccion-usuarios">
-            <div className="seccion-header">
-              <h2>📋 Mis Solicitudes</h2>
-              <button 
-                className="btn-secondary"
-                onClick={() => setActiveTab('navegacion')}
-              >
-                ← Volver al Panel
-              </button>
-            </div>
-            <SolicitudTabla 
-              userRole="seminarista"
-              readOnly={false}
-              canCreate={true}
-              canEdit={false}
-              canDelete={false}
-              filtroUsuario={true}
-            />
-          </div>
-        );
-      
-      case 'crear-solicitud':
-        return (
-          <div className="seccion-usuarios">
-            <div className="seccion-header">
-              <h2>➕ Nueva Solicitud</h2>
-              <button 
-                className="btn-secondary"
-                onClick={() => setActiveTab('navegacion')}
-              >
-                ← Volver al Panel
-              </button>
-            </div>
-            <div className="alert" style={{ marginBottom: '20px' }}>
-              <h3>Crear nueva solicitud</h3>
-              <p>Presiona el botón para crear una nueva solicitud al administrador</p>
-            </div>
-            <div style={{ textAlign: 'center', padding: '40px' }}>
-              <button 
-                className="btn-primary"
-                onClick={() => setModalOpen(true)}
-                style={{ fontSize: '1.1rem', padding: '16px 32px' }}
-              >
-                ➕ Crear Nueva Solicitud
-              </button>
+    return (
+      <div className="seccion-bienvenida fade-in">
+        <div className="bienvenida-header">
+          <h1>
+            ¡Bienvenido, <span className="text-accent">{user?.nombre || 'Seminarista'}</span>! 
+          </h1>
+          <p className="bienvenida-subtitle">
+            Tu panel de control moderno y centralizado. Gestiona eventos, reservas de cabañas, 
+            solicitudes y mantén un seguimiento completo de todas tus actividades seminariales 
+            con estilo y eficiencia.
+          </p>
+        </div>
+        
+        <div className="status-cards slide-up">
+          <div className="status-card">
+            <div className="status-icon">🔒</div>
+            <div className="status-info">
+              <h3>Sistema Activo</h3>
+              <p>Dashboard en línea</p>
+              <span className="status-indicator">✓ Funcionando correctamente</span>
             </div>
           </div>
-        );
-      
-      default:
-        return (
-          <DashboardOverview 
-            onTabChange={handleTabChange}
-            onReservar={handleReservar}
-            user={user}
-          />
-        );
-    }
+          
+          <div className="status-card">
+            <div className="status-icon">🔐</div>
+            <div className="status-info">
+              <h3>Acceso Seguro</h3>
+              <p>Autenticación verificada</p>
+              <span className="status-indicator">✓ Protegido</span>
+            </div>
+          </div>
+          
+          <div className="status-card">
+            <div className="status-icon">⚡</div>
+            <div className="status-info">
+              <h3>Navegación Rápida</h3>
+              <p>Acceso optimizado</p>
+              <span className="status-indicator">✓ Listo para usar</span>
+            </div>
+          </div>
+          
+          <div className="status-card">
+            <div className="status-icon">📊</div>
+            <div className="status-info">
+              <h3>Recursos</h3>
+              <p>Herramientas disponibles</p>
+              <span className="status-indicator">✓ Todo disponible</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="acciones-rapidas">
+          <div className="accion-card" onClick={() => handleNavigation('/dashboard/seminarista/eventos')}>
+            <div className="accion-icon">🎉</div>
+            <h3 className="accion-titulo">Eventos</h3>
+            <p className="accion-descripcion">
+              Explora y participa en eventos del seminario
+            </p>
+            <button className="accion-button">Explorar Eventos</button>
+          </div>
+
+          <div className="accion-card" onClick={() => handleNavigation('/dashboard/seminarista/cabanas')}>
+            <div className="accion-icon">🏘️</div>
+            <h3 className="accion-titulo">Cabañas</h3>
+            <p className="accion-descripcion">
+              Descubre y reserva cabañas disponibles
+            </p>
+            <button className="accion-button">Ver Cabañas</button>
+          </div>
+
+          <div className="accion-card" onClick={() => handleNavigation('/dashboard/seminarista/mis-inscripciones')}>
+            <div className="accion-icon">📝</div>
+            <h3 className="accion-titulo">Mis Inscripciones</h3>
+            <p className="accion-descripcion">
+              Revisa tus inscripciones a eventos
+            </p>
+            <button className="accion-button">Ver Inscripciones</button>
+          </div>
+
+          <div className="accion-card" onClick={() => handleNavigation('/dashboard/seminarista/mis-reservas')}>
+            <div className="accion-icon">🏠</div>
+            <h3 className="accion-titulo">Mis Reservas</h3>
+            <p className="accion-descripcion">
+              Gestiona tus reservas de cabañas
+            </p>
+            <button className="accion-button">Ver Reservas</button>
+          </div>
+
+          <div className="accion-card" onClick={() => handleNavigation('/dashboard/seminarista/mis-solicitudes')}>
+            <div className="accion-icon">📋</div>
+            <h3 className="accion-titulo">Mis Solicitudes</h3>
+            <p className="accion-descripcion">
+              Consulta el estado de tus solicitudes
+            </p>
+            <button className="accion-button">Ver Solicitudes</button>
+          </div>
+
+          <div className="accion-card" onClick={() => handleNavigation('/dashboard/seminarista/nueva-solicitud')}>
+            <div className="accion-icon">✨</div>
+            <h3 className="accion-titulo">Nueva Solicitud</h3>
+            <p className="accion-descripcion">
+              Crea una nueva solicitud
+            </p>
+            <button className="accion-button">Crear Solicitud</button>
+          </div>
+        </div>
+      </div>
+    );
   };
 
-  return (
-    <div className="dashboard-contenedor">
-      {/* Header Component */}
-      <Header 
-        user={user}
-        breadcrumbPath={breadcrumbPath}
-        onTabChange={handleTabChange}
-      />
-
-      {/* Notification Banner */}
-      <NotificationBanner 
-        message={mensaje}
-        type={mensajeTipo}
-        onClose={closeMensaje}
-      />
-
-      {/* Main Content */}
-      <div className="contenido">
-        {renderContent()}
+  if (mostrarModificarPerfil) {
+    return (
+      <div className="dashboard-contenedor">
+        <Header 
+          userRole="seminarista" 
+          userName={user?.nombre}
+          breadcrumbPath={breadcrumbPath}
+        />
         
-        {/* Modal para crear solicitud */}
-        {modalOpen && (
-          <SolicitudModal
-            onClose={() => setModalOpen(false)}
-            onSubmit={(data) => {
-              console.log('Nueva solicitud:', data);
-              setModalOpen(false);
-              handleSuccess('Solicitud creada exitosamente');
-            }}
-            userRole="seminarista"
-          />
-        )}
-
-        {/* Modal de reserva */}
-        {mostrarFormularioReserva && (
-          <FormularioReserva
-            cabana={cabanaSeleccionada}
-            onClose={() => {
-              setMostrarFormularioReserva(false);
-              setCabanaSeleccionada(null);
-            }}
-            onSuccess={handleSuccess}
-          />
-        )}
-
-        {/* Modal de modificar perfil */}
-        {mostrarModificarPerfil && (
-          <ModificarPerfil
+        <main className="main-content">
+          <ModificarPerfil 
             onClose={() => setMostrarModificarPerfil(false)}
             onSuccess={handleSuccess}
           />
-        )}
+        </main>
       </div>
+    );
+  }
+
+  return (
+    <div className="dashboard-contenedor">
+      <Header 
+        userRole="seminarista" 
+        userName={user?.nombre}
+        breadcrumbPath={breadcrumbPath}
+      />
+      
+      {mensaje && (
+        <NotificationBanner 
+          message={mensaje}
+          type={mensajeTipo}
+          onClose={closeMensaje}
+        />
+      )}
+      
+      <main className="main-content">
+        {renderContent()}
+      </main>
     </div>
   );
 };
