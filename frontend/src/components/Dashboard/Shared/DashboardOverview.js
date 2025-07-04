@@ -42,16 +42,17 @@ const DashboardOverview = ({ onTabChange, onReservar, user }) => {
       description: 'Acceso rápido a funciones'
     },
     {
-      title: 'Aplicaciones',
-      value: '📱',
+      title: 'Dapps',
+      value: '🏠',
       icon: (
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <rect x="4" y="2" width="16" height="20" rx="2" ry="2"/>
-          <line x1="12" y1="18" x2="12.01" y2="18"/>
+          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+          <polyline points="3.27,6.96 12,12.01 20.73,6.96"/>
+          <line x1="12" y1="22.08" x2="12" y2="12"/>
         </svg>
       ),
       color: 'info',
-      description: 'Herramientas disponibles'
+      description: 'Aplicaciones disponibles'
     }
   ];
 
@@ -116,11 +117,11 @@ const DashboardOverview = ({ onTabChange, onReservar, user }) => {
       <div className="welcome-section">
         <div className="welcome-content">
           <h2 className="welcome-title">
-            ¡Hola, {user?.nombre || 'Seminarista'}! 👋
+            🌟 Panel Seminarista
           </h2>
           <p className="welcome-description">
-            Bienvenido a tu panel personalizado. Aquí puedes gestionar tus eventos, 
-            reservas y solicitudes de manera rápida y eficiente.
+            Bienvenido al panel de seminarista <strong>{user?.nombre || 'Usuario'}</strong>. 
+            Aquí puedes gestionar tus eventos, reservas y solicitudes de manera eficiente.
           </p>
         </div>
         <div className="welcome-illustration">
@@ -177,18 +178,18 @@ const DashboardOverview = ({ onTabChange, onReservar, user }) => {
             </div>
             <div className="activity-content">
               <p className="activity-text">Sesión iniciada correctamente</p>
-              <span className="activity-time">Ahora mismo</span>
+              <span className="activity-time">Ahora</span>
             </div>
           </div>
           <div className="activity-item">
             <div className="activity-icon activity-icon-info">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <rect x="4" y="2" width="16" height="20" rx="2" ry="2"/>
-                <line x1="12" y1="18" x2="12.01" y2="18"/>
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                <polyline points="9,22 9,12 15,12 15,22"/>
               </svg>
             </div>
             <div className="activity-content">
-              <p className="activity-text">Panel actualizado con nuevas funcionalidades</p>
+              <p className="activity-text">Panel de seminarista actualizado</p>
               <span className="activity-time">Hoy</span>
             </div>
           </div>
@@ -201,7 +202,7 @@ const DashboardOverview = ({ onTabChange, onReservar, user }) => {
               </svg>
             </div>
             <div className="activity-content">
-              <p className="activity-text">Sistema optimizado para mejor rendimiento</p>
+              <p className="activity-text">Nuevas funcionalidades disponibles</p>
               <span className="activity-time">Esta semana</span>
             </div>
           </div>

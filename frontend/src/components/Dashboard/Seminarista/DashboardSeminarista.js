@@ -1,19 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import NavegacionSeminarista from '../NavegacionSeminarista';
-import EventosNavegables from '../EventosNavegables';
-import CabanasNavegables from '../CabanasNavegables';
-import FormularioReserva from '../FormularioReserva';
-import ModificarPerfil from '../ModificarPerfil';
-import InscripcionTablaContainer from '../Tablas/InscripcionTablaContainer';
-import ReservaTablaContainer from '../Tablas/ReservaTablaContainer';
-import SolicitudTabla from '../Tablas/SolicitudTabla';
-import SolicitudModal from '../Modales/SolicitudModal';
-import { useAuthCheck } from '../../../hooks/useAuthCheck';
+import NavegacionSeminarista from './NavegacionSeminarista';
+import EventosNavegables from './EventosNavegables';
+import CabanasNavegables from './CabanasNavegables';
+import FormularioReserva from './FormularioReserva';
+import ModificarPerfil from './ModificarPerfil';
+import InscripcionTablaContainer from './Tablas/InscripcionTablaContainer';
+import ReservaTablaContainer from './Tablas/ReservaTablaContainer';
+import SolicitudTabla from './Tablas/SolicitudTabla';
+import SolicitudModal from './Modales/SolicitudModal';
+import { useAuthCheck } from '../../hooks/useAuthCheck';
 
 // Modular Components
-import Header from '../Shared/Header';
-import DashboardOverview from '../Shared/DashboardOverview';
-import NotificationBanner from '../Shared/NotificationBanner';
+import Header from './components/Header';
+import DashboardOverview from './components/DashboardOverview';
+import NotificationBanner from './components/NotificationBanner';
 
 import './DashboardSeminarista.css';
 
