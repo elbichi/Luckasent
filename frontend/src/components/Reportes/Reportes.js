@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { reporteService } from '../../services/reporteService';
-import '../Dashboard/Dashboard.css'
-
+import './Reportes.css';
 const Reportes = () => {
   const [tipoReporte, setTipoReporte] = useState('dashboard');
   const [datosReporte, setDatosReporte] = useState(null);

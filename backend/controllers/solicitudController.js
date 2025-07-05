@@ -426,7 +426,7 @@ exports.obtenerMisSolicitudes = async (req, res) => {
     const solicitudes = await Solicitud.find({ solicitante: req.userId })
       .populate('categoria', 'nombre descripcion')
       .populate('solicitante', 'nombre apellido correo')
-      .populate('responsableAsignado', 'nombre apellido')
+      .populate('responsable', 'nombre apellido') // Cambia responsableAsignado por responsable
       .sort({ fechaSolicitud: -1 }); // Ordenar por fecha de solicitud, más recientes primero
       
     console.log('[MIS SOLICITUDES] Encontradas:', solicitudes.length);

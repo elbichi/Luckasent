@@ -19,6 +19,10 @@ const Login = () => {
       const data = await authService.login(correo, password);
       localStorage.setItem('token', data.token);
       localStorage.setItem('usuario', JSON.stringify(data.user));
+      // Guardar también el userId para fácil acceso en otras vistas
+      if (data.user && data.user._id) {
+        localStorage.setItem('userId', data.user._id);
+      }
       
       // Redireccionar según el rol del usuario
       if (data.user.role === 'admin') {

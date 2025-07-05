@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import './FormularioReserva.css';
 
 const FormularioReserva = ({ cabana, onClose, onSuccess }) => {
   const [loading, setLoading] = useState(false);

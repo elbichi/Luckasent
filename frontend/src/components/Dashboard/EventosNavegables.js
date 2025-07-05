@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { eventService } from '../../services/eventService';
 import FormularioInscripcion from './FormularioInscripcion';
 import './Dashboard.css';
+import './EventosNavegables.css';
 
 const EventosNavegables = ({ onSuccess }) => {
   const [eventos, setEventos] = useState([]);

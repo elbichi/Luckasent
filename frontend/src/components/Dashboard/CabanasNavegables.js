@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import './estilosDashboard.css';
 
 const CabanasNavegables = ({ onReservar }) => {
   const [cabanas, setCabanas] = useState([]);
@@ -38,158 +39,34 @@ const CabanasNavegables = ({ onReservar }) => {
   if (error) return <div className="error-cabanas">{error}</div>;
 
   return (
-    <div className="cabanas-navegables">
-      <div className="cabanas-grid">
-        {cabanas.map(cabana => (
-          <div key={cabana._id} className="cabana-card">
-            {/* Imagen de la cabaña */}
-            <div className="cabana-imagen">
-              <img 
-                src={cabana.imagen || '/images/default-cabin.svg'} 
-                alt={cabana.nombre}
-                onError={(e) => {
-                  e.target.src = '/images/default-cabin.svg';
-                }}
-              />
-            </div>
-            
-            <div className="cabana-header">
-              <h3>{cabana.nombre}</h3>
-              <span className={`cabana-estado estado-${cabana.estado?.toLowerCase()}`}>
-                {cabana.estado === 'disponible' ? 'Disponible' : 
-                 cabana.estado === 'ocupada' ? 'Ocupada' : 
-                 cabana.estado === 'mantenimiento' ? 'Mantenimiento' : 
-                 cabana.estado || 'Sin estado'}
-              </span>
-            </div>
-            
-            <div className="cabana-info">
-              <div className="info-item">
-                <span className="info-icon">👥</span>
-                <span className="info-text">Capacidad: {cabana.capacidad || 'No especificada'}</span>
+    <div className="app-background">
+      <div className="section-container">
+        <h2 style={{fontWeight:800, fontSize:'2rem', color:'#a5b4fc'}}>Cabañas Disponibles</h2>
+        <div className="grid-cards">
+          {cabanas.map(cabana => (
+            <div key={cabana._id} className="card">
+              <div className="cabana-imagen" style={{width:'100%',textAlign:'center',marginBottom:'1rem'}}>
+                <img 
+                  src={cabana.imagen || '/images/default-cabin.svg'} 
+                  alt={cabana.nombre}
+                  style={{width:'90px',height:'90px',objectFit:'cover',borderRadius:'50%',background:'#23243a'}}
+                  onError={(e) => {e.target.src = '/images/default-cabin.svg';}}
+                />
               </div>
-              
-              <div className="info-item">
-                <span className="info-icon">💰</span>
-                <span className="info-text">
-                  $14,000/noche
-                </span>
-              </div>
-              
-              <div className="info-item">
-                <span className="info-icon">🏷️</span>
-                <span className="info-text">
-                  {cabana.categoria?.nombre || 'Sin categoría'}
-                </span>
-              </div>
-            </div>
-
-            <div className="cabana-descripcion">
-              <p>{cabana.descripcion || 'Sin descripción disponible'}</p>
-            </div>
-
-            <div className="cabana-actions">
-              <button 
-                className="btn-ver-detalle"
-                onClick={() => setCabanaSeleccionada(cabana)}
-              >
-                Ver Detalle
+              <div className="card-title">{cabana.nombre}</div>
+              <div className="card-subtitle">{cabana.descripcion || 'Sin descripción'}</div>
+              <span style={{color:'#fbbf24',fontWeight:600}}>Precio: {cabana.precio ? `$${cabana.precio}` : '-'}</span>
+              <span>Estado: <b style={{color:cabana.estado==='disponible'?'#5eead4':'#f472b6'}}>{cabana.estado}</b></span>
+              <span>Cupos: {cabana.cuposDisponibles ?? '-'} / {cabana.cuposTotales ?? '-'}</span>
+              <span>Ubicación: {cabana.ubicacion}</span>
+              <span style={{color:'#818cf8'}}>Etiquetas: {cabana.etiquetas?.join(', ')}</span>
+              <button className="card-btn" onClick={()=>onReservar && onReservar(cabana)} disabled={cabana.estado!=='disponible'}>
+                Reservar
               </button>
-              
-              {cabana.estado?.toLowerCase() === 'disponible' && (
-                <button 
-                  className="btn-reservar"
-                  onClick={() => onReservar(cabana)}
-                >
-                  Reservar
-                </button>
-              )}
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
-
-      {cabanas.length === 0 && (
-        <div className="no-cabanas">
-          <h3>🏠 No hay cabañas disponibles</h3>
-          <p>Por el momento no hay cabañas registradas.</p>
-        </div>
-      )}
-
-      {/* Modal de detalle de cabaña */}
-      {cabanaSeleccionada && (
-        <div className="modal-overlay" onClick={() => setCabanaSeleccionada(null)}>
-          <div className="modal-detalle-cabana" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>{cabanaSeleccionada.nombre}</h2>
-              <button 
-                className="btn-close"
-                onClick={() => setCabanaSeleccionada(null)}
-              >
-                ✕
-              </button>
-            </div>
-            
-            <div className="modal-body">
-              <div className="detalle-cabana">
-                <div className="detalle-item">
-                  <strong>👥 Capacidad:</strong>
-                  <span>{cabanaSeleccionada.capacidad || 'No especificada'}</span>
-                </div>
-                
-                <div className="detalle-item">
-                  <strong>💰 Precio:</strong>
-                  <span>$14,000/noche</span>
-                </div>
-                
-                <div className="detalle-item">
-                  <strong>🏷️ Categoría:</strong>
-                  <span>{cabanaSeleccionada.categoria?.nombre || 'Sin categoría'}</span>
-                </div>
-                
-                <div className="detalle-item">
-                  <strong>📝 Descripción:</strong>
-                  <p>{cabanaSeleccionada.descripcion || 'Sin descripción disponible'}</p>
-                </div>
-                
-                <div className="detalle-item">
-                  <strong>🔄 Estado:</strong>
-                  <span className={`estado-badge estado-${cabanaSeleccionada.estado?.toLowerCase()}`}>
-                    {getEstadoColor(cabanaSeleccionada.estado)} {cabanaSeleccionada.estado || 'Sin estado'}
-                  </span>
-                </div>
-
-                {cabanaSeleccionada.servicios && (
-                  <div className="detalle-item">
-                    <strong>🛎️ Servicios:</strong>
-                    <div className="servicios-list">
-                      {cabanaSeleccionada.servicios.map((servicio, index) => (
-                        <span key={index} className="servicio-tag">
-                          {servicio}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-              
-              {cabanaSeleccionada.estado?.toLowerCase() === 'disponible' && (
-                <div className="modal-actions">
-                  <button 
-                    className="btn-reservar-modal"
-                    onClick={() => {
-                      onReservar(cabanaSeleccionada);
-                      setCabanaSeleccionada(null);
-                    }}
-                  >
-                    🗓️ Reservar esta cabaña
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

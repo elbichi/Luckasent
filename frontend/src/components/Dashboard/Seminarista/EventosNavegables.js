@@ -3,6 +3,9 @@ import { useAuthCheck } from '../../../hooks/useAuthCheck';
 import { eventService } from '../../../services/eventService';
 import { inscripcionService } from '../../../services/inscripcionService';
 import './EventosNavegables.css';
+import NavBar from './NavBar';
+import '../estilosDashboard.css';
+import { Link } from 'react-router-dom';
 
 const EventosNavegables = () => {
   const { user } = useAuthCheck('seminarista');
@@ -102,66 +105,66 @@ const EventosNavegables = () => {
   };
 
   return (
-    <div className="seccion-eventos">
-      <h2>Eventos del Seminario</h2>
-      {loading && <p>Cargando eventos...</p>}
-      {error && <p style={{color:'#f472b6'}}>{error}</p>}
-      {!loading && !error && (
-        <>
-        <ul className="lista-eventos">
-          {eventos.length === 0 ? (
-            <li>No hay eventos disponibles.</li>
-          ) : (
-            eventos.map(ev => {
-              const inscrito = estaInscrito(ev._id);
-              return (
-                <li key={ev._id} className="evento-item">
-                  <div className="evento-imgbox">
-                    <img
-                      src={ev.images || ev.imagenUrl || ev.imagen || '/images/default-event.svg'}
-                      alt={ev.name}
-                      className="evento-img"
-                    />
-                  </div>
-                  <div className="evento-info">
-                    <span className="evento-titulo">{ev.name}</span>
-                    <span className="evento-descripcion">{ev.description}</span>
-                    <span className="evento-precio">Precio: {ev.price === 0 ? 'Gratis' : `$${ev.price?.toLocaleString()}`}</span>
-                    <span className="evento-categoria">Categoría: {ev.categoria?.nombre || ev.categoria || '-'}</span>
+    <div className="app-background">
+      <NavBar />
+      <div className="section-container">
+        <Link to="/seminarista/dashboard" className="card-btn" style={{marginBottom:'1.5rem',display:'inline-block'}}>← Volver al Dashboard</Link>
+        <h2 style={{fontWeight:800, fontSize:'2rem', color:'#a5b4fc'}}>Eventos del Seminario</h2>
+        {loading && <p>Cargando eventos...</p>}
+        {error && <p style={{color:'#f472b6'}}>{error}</p>}
+        {!loading && !error && (
+          <div className="grid-cards">
+            {eventos.length === 0 ? (
+              <div className="card">No hay eventos disponibles.</div>
+            ) : (
+              eventos.map(ev => {
+                const inscrito = estaInscrito(ev._id);
+                return (
+                  <div key={ev._id} className="card">
+                    <div className="evento-imgbox" style={{width:'100%',textAlign:'center',marginBottom:'1rem'}}>
+                      <img
+                        src={ev.imagenUrl || ev.imagen || '/images/default-event.svg'}
+                        alt={ev.nombre || 'Evento sin nombre'}
+                        style={{width:'90px',height:'90px',objectFit:'cover',borderRadius:'50%',background:'#23243a'}}
+                      />
+                    </div>
+                    <div className="card-title">{ev.nombre || '-'}</div>
+                    <div className="card-subtitle">{ev.descripcion || '-'}</div>
+                    <span style={{color:'#fbbf24',fontWeight:600}}>Precio: {ev.precio === 0 ? 'Gratis' : (ev.precio ? `$${ev.precio.toLocaleString()}` : '-')}</span>
+                    <span>Categoría: {ev.categoria?.nombre || ev.categoria || '-'}</span>
                     {ev.etiquetas && ev.etiquetas.length > 0 && (
-                      <span className="evento-etiquetas">Etiquetas: {ev.etiquetas.join(', ')}</span>
+                      <span style={{color:'#38bdf8'}}>Etiquetas: {ev.etiquetas.join(', ')}</span>
                     )}
-                    <span className="evento-prioridad">Prioridad: {ev.prioridad}</span>
+                    <span>Prioridad: {ev.prioridad || '-'}</span>
                     {ev.observaciones && (
-                      <span className="evento-observaciones">Observaciones: {ev.observaciones}</span>
+                      <span style={{color:'#f472b6',fontStyle:'italic'}}>Observaciones: {ev.observaciones}</span>
                     )}
                     {inscrito && (
-                      <span className="evento-inscrito">✅ Ya estás inscrito</span>
+                      <span style={{color:'#5eead4',fontWeight:600}}>✅ Ya estás inscrito</span>
                     )}
-                  </div>
-                  <div className="evento-actions">
                     <button 
-                      className={`evento-btn ${inscrito ? 'inscrito' : ''}`}
+                      className={`card-btn ${inscrito ? 'inscrito' : ''}`}
                       onClick={() => handleInscribir(ev)}
                       disabled={inscrito}
+                      style={{marginTop:'1rem'}}
                     >
                       {inscrito ? '✓ Inscrito' : 'Inscribirme'}
                     </button>
                   </div>
-                </li>
-              );
-            })
-          )}
-        </ul>
+                );
+              })
+            )}
+          </div>
+        )}
         {eventoSeleccionado && (
           <div className="modal-inscripcion">
             <div className="modal-content">
               <button className="close-modal" onClick={() => setEventoSeleccionado(null)}>&times;</button>
-              <h3>Inscribirse a: {eventoSeleccionado.name}</h3>
+              <h3>Inscribirse a: {eventoSeleccionado.nombre}</h3>
               <div className="evento-modal-info">
-                <strong>Nombre:</strong> {eventoSeleccionado.name}<br/>
-                <strong>Descripción:</strong> {eventoSeleccionado.description}<br/>
-                <strong>Precio:</strong> {eventoSeleccionado.price === 0 ? 'Gratis' : `$${eventoSeleccionado.price?.toLocaleString()}`}<br/>
+                <strong>Nombre:</strong> {eventoSeleccionado.nombre}<br/>
+                <strong>Descripción:</strong> {eventoSeleccionado.descripcion}<br/>
+                <strong>Precio:</strong> {eventoSeleccionado.precio === 0 ? 'Gratis' : (eventoSeleccionado.precio ? `$${eventoSeleccionado.precio.toLocaleString()}` : '-')}<br/>
                 <strong>Observaciones:</strong> {eventoSeleccionado.observaciones || '-'}
               </div>
               <form onSubmit={handleSubmitInscripcion}>
@@ -189,7 +192,7 @@ const EventosNavegables = () => {
                 <input type="number" name="edad" min="1" max="120" defaultValue={user?.edad || ''} required />
                 <label>Observaciones:</label>
                 <textarea name="observaciones" placeholder="¿Algo que quieras agregar?" />
-                <button type="submit" className="evento-btn" disabled={inscripcionLoading}>
+                <button type="submit" className="card-btn" disabled={inscripcionLoading}>
                   {inscripcionLoading ? 'Enviando...' : 'Confirmar inscripción'}
                 </button>
                 {inscripcionMsg && <div style={{marginTop:'1rem', color:'#5eead4', fontWeight:600}}>{inscripcionMsg}</div>}
@@ -197,8 +200,7 @@ const EventosNavegables = () => {
             </div>
           </div>
         )}
-        </>
-      )}
+      </div>
     </div>
   );
 };

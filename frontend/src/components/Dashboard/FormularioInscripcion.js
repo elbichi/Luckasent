@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { inscripcionService } from '../../services/inscripcionService';
 
-const FormularioInscripcion = ({ evento, onClose, onSuccess }) => {
+const FormularioInscripcion = ({ evento, onClose, onSuccess, inscripcion = null, modoEdicion = false }) => {
   const [loading, setLoading] = useState(false);
   const [categorias, setCategorias] = useState([]);
   const [formData, setFormData] = useState({
@@ -17,25 +18,39 @@ const FormularioInscripcion = ({ evento, onClose, onSuccess }) => {
     categoria: '',
     observaciones: ''
   });
+  // Estado para mostrar mensaje de éxito o error
+  const [mensaje, setMensaje] = useState('');
 
   useEffect(() => {
-    // Cargar datos del usuario autenticado
-    const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
-    console.log('🔍 Usuario desde localStorage:', usuario);
-    console.log('🎯 Evento recibido:', evento);
-    
-    setFormData(prev => ({
-      ...prev,
-      usuario: usuario._id || '',
-      evento: evento?._id || '',
-      nombre: usuario.nombre || '',
-      apellido: usuario.apellido || '',
-      correo: usuario.correo || '',
-      telefono: usuario.telefono || ''
-    }));
-
+    if (modoEdicion && inscripcion) {
+      setFormData({
+        usuario: inscripcion.usuario?._id || inscripcion.usuario || '',
+        evento: inscripcion.evento?._id || inscripcion.evento || '',
+        nombre: inscripcion.nombre || '',
+        apellido: inscripcion.apellido || '',
+        tipoDocumento: inscripcion.tipoDocumento || 'Cédula de ciudadanía',
+        numeroDocumento: inscripcion.numeroDocumento || '',
+        correo: inscripcion.correo || '',
+        telefono: inscripcion.telefono || '',
+        edad: inscripcion.edad || '',
+        categoria: inscripcion.categoria?._id || inscripcion.categoria || '',
+        observaciones: inscripcion.observaciones || ''
+      });
+    } else {
+      // Cargar datos del usuario autenticado
+      const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
+      setFormData(prev => ({
+        ...prev,
+        usuario: usuario._id || '',
+        evento: evento?._id || '',
+        nombre: usuario.nombre || '',
+        apellido: usuario.apellido || '',
+        correo: usuario.correo || '',
+        telefono: usuario.telefono || ''
+      }));
+    }
     cargarCategorias();
-  }, [evento]);
+  }, [evento, inscripcion, modoEdicion]);
 
   const cargarCategorias = async () => {
     try {
@@ -66,7 +81,7 @@ const FormularioInscripcion = ({ evento, onClose, onSuccess }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-
+    setMensaje('');
     try {
       console.log('📝 Datos del formulario antes de enviar:', formData);
       console.log('🎯 Evento ID:', formData.evento);
@@ -98,25 +113,36 @@ const FormularioInscripcion = ({ evento, onClose, onSuccess }) => {
         return;
       }
       
-      const token = localStorage.getItem('token');
-      const response = await axios.post('http://localhost:3000/api/inscripciones', formData, {
-        headers: { 
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
+      if (modoEdicion && inscripcion) {
+        // PUT para editar
+        const response = await inscripcionService.update(inscripcion._id, formData);
+        if (response.success) {
+          setMensaje('✅ Inscripción actualizada exitosamente.');
+          if (onSuccess) onSuccess('Inscripción actualizada exitosamente');
+        } else {
+          setMensaje('Error: ' + (response.message || 'Error desconocido'));
         }
-      });
-
-      console.log('✅ Respuesta del servidor:', response.data);
-      if (response.data.success) {
-        onSuccess('Inscripción realizada exitosamente');
-        onClose();
       } else {
-        alert('Error: ' + (response.data.message || 'Error desconocido'));
+        // POST para nueva
+        const token = localStorage.getItem('token');
+        const response = await axios.post('http://localhost:3000/api/inscripciones', formData, {
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        if (response.data.success) {
+          setMensaje('✅ Inscripción realizada exitosamente.');
+          setFormData({
+            usuario: '', evento: evento?._id || '', nombre: '', apellido: '', tipoDocumento: 'Cédula de ciudadanía', numeroDocumento: '', correo: '', telefono: '', edad: '', categoria: '', observaciones: ''
+          });
+          if (onSuccess) onSuccess('Inscripción realizada exitosamente');
+        } else {
+          setMensaje('Error: ' + (response.data.message || 'Error desconocido'));
+        }
       }
     } catch (error) {
-      console.error('❌ Error al crear inscripción:', error);
-      console.error('📋 Detalles del error:', error.response?.data);
-      alert('Error al procesar la inscripción: ' + (error.response?.data?.message || error.message));
+      setMensaje('Error al procesar la inscripción: ' + (error.response?.data?.message || error.message));
     } finally {
       setLoading(false);
     }
@@ -139,6 +165,12 @@ const FormularioInscripcion = ({ evento, onClose, onSuccess }) => {
           <h2>📝 Inscripción a Evento</h2>
           <button className="btn-close" onClick={onClose}>✕</button>
         </div>
+        {/* Mensaje de éxito o error */}
+        {mensaje && (
+          <div style={{ margin: '10px 0', color: mensaje.startsWith('✅') ? 'green' : 'red', fontWeight: 'bold' }}>
+            {mensaje}
+          </div>
+        )}
 
         <div className="evento-info-inscripcion">
           <h3>{evento?.nombre}</h3>
@@ -259,11 +291,11 @@ const FormularioInscripcion = ({ evento, onClose, onSuccess }) => {
                 ) : (
                   categorias.map(cat => (
                     <option key={cat._id} value={cat._id}>
-                      {cat.nombre} {cat.codigo ? `- ${cat.codigo}` : ''}
+                      {String(cat.nombre)}{cat.codigo ? ` - ${String(cat.codigo)}` : ''}
                     </option>
                   ))
-                )}
-              </select>
+                )
+              }</select>
               {categorias.length === 0 && (
                 <small style={{ color: '#dc3545', fontSize: '0.8rem' }}>
                   ⚠️ No se han cargado las categorías. Verifique su conexión.

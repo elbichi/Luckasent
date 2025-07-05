@@ -112,21 +112,20 @@ exports.crearInscripcion = async (req, res) => {
 exports.obtenerInscripciones = async (req, res) => {
   try {
     console.log('[INSCRIPCIONES] Usuario:', req.userId, 'Rol:', req.userRole);
-    
     let filtro = {};
-    
-    // Si es seminarista o externo, solo puede ver sus propias inscripciones
     if (req.userRole === 'seminarista' || req.userRole === 'externo') {
       filtro.usuario = req.userId;
       console.log('[INSCRIPCIONES] Filtrando por usuario:', req.userId);
     }
-    // Admin y tesorero pueden ver todas las inscripciones
-    
     const inscripciones = await Inscripcion.find(filtro)
       .populate('usuario', 'nombre apellido correo')
-      .populate('evento', 'nombre fecha lugar descripcion')
-      .populate('categoria', 'nombre descripcion codigo');
-      
+      .populate({
+        path: 'evento',
+        select: 'nombre descripcion imagen imagenUrl precio etiquetas fechaEvento horaInicio horaFin lugar direccion duracionDias cuposTotales cuposDisponibles programa prioridad observaciones categoria',
+        populate: { path: 'categoria', select: 'nombre descripcion codigo' }
+      })
+      .populate('categoria', 'nombre descripcion codigo')
+      .sort({ createdAt: -1 });
     console.log('[INSCRIPCIONES] Encontradas:', inscripciones.length);
     res.json({ success: true, data: inscripciones });
   } catch (error) {
@@ -139,13 +138,14 @@ exports.obtenerInscripciones = async (req, res) => {
 exports.obtenerMisInscripciones = async (req, res) => {
   try {
     console.log('[MIS INSCRIPCIONES] Usuario:', req.userId);
-    
     const inscripciones = await Inscripcion.find({ usuario: req.userId })
       .populate('usuario', 'nombre apellido correo')
-      .populate('evento', 'nombre fechaEvento lugar descripcion')
+      .populate({
+        path: 'evento',
+        select: 'nombre fechaEvento lugar descripcion imagen imagenUrl precio etiquetas horaInicio horaFin cuposDisponibles cuposTotales direccion programa observaciones',
+      })
       .populate('categoria', 'nombre descripcion codigo')
       .sort({ createdAt: -1 }); // Ordenar por fecha de creación, más recientes primero
-      
     console.log('[MIS INSCRIPCIONES] Encontradas:', inscripciones.length);
     res.json({ success: true, data: inscripciones });
   } catch (error) {
